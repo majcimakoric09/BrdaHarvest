@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@theme {
+  --color-brda-forest: #1f3329;
+  --color-brda-forest-light: #2a4436;
+  --color-brda-vine: #4c7a5b;
+  --color-brda-vine-light: #6b9a79;
+  --color-brda-beige: #efe6d2;
+  --color-brda-beige-light: #f6f0e2;
+  --color-brda-offwhite: #faf8f3;
+  --color-brda-burgundy: #7a2e3a;
+  --color-brda-burgundy-light: #9c4652;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-brda-offwhite);
+  color: var(--color-brda-forest);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
