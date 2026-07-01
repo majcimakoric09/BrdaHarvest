@@ -38,6 +38,7 @@ _output/
 .vscode/
 .idea/
 .claude/settings.local.json
+.playwright-mcp/
 
 # --- Logs ---
 *.log

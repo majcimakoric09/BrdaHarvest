@@ -1,0 +1,83 @@
+{
+  "classification_labels": [
+    "Early",
+    "Normal",
+    "Late"
+  ],
+  "categorical_features": [
+    "grape_variety",
+    "soil_type",
+    "location"
+  ],
+  "numeric_features": [
+    "year",
+    "elevation_m",
+    "vine_age_years",
+    "avg_temperature_C",
+    "min_spring_temp_C",
+    "summer_heat_days",
+    "spring_frost_days",
+    "winter_rainfall_mm",
+    "spring_rainfall_mm",
+    "summer_rainfall_mm",
+    "rainfall_deviation_mm",
+    "humidity_pct",
+    "sunshine_hours",
+    "soil_moisture_pct",
+    "heat_frost_ratio",
+    "prev_harvest_doy",
+    "prev_yield_kg_ha",
+    "rainfall_efficiency",
+    "gdd_per_sunshine_hour",
+    "yield_lag_change",
+    "harvest_lag_change"
+  ],
+  "user_input_features": [
+    "grape_variety",
+    "soil_type",
+    "location",
+    "elevation_m",
+    "vine_age_years",
+    "year"
+  ],
+  "categorical_options": {
+    "grape_variety": ["Cabernet Sauvignon", "Chardonnay", "Malvazija", "Merlot", "Pinot Grigio", "Pinot Noir", "Rebula", "Sauvignon Blanc"],
+    "soil_type": ["Clay", "Clay-Loam", "Loam", "Marl", "Marl-Loam", "Sandy-Loam"],
+    "location": ["Biljana", "Cerovo", "Dobrovo", "Kozana", "Medana", "Neblo", "Vipolže", "Šmartno"]
+  },
+  "valid_ranges": {
+    "year": {"min": 1991, "max": 2035, "note": "training data covers 1991-2024; beyond that is extrapolation"},
+    "elevation_m": {"min": 50, "max": 400, "note": "training data covers 88-155m; wider bound left for other Brda vineyards"},
+    "vine_age_years": {"min": 0, "max": 80}
+  },
+  "raw_feature_defaults": {
+    "avg_temperature_C": 18.0,
+    "min_spring_temp_C": 3.3,
+    "summer_heat_days": 20.0,
+    "spring_frost_days": 3.0,
+    "growing_degree_days": 1464.0,
+    "winter_rainfall_mm": 157.0,
+    "spring_rainfall_mm": 265.0,
+    "summer_rainfall_mm": 327.0,
+    "rainfall_deviation_mm": -13.0,
+    "humidity_pct": 66.8,
+    "sunshine_hours": 2225.5,
+    "soil_moisture_pct": 37.5,
+    "heat_frost_ratio": 6.67,
+    "prev_harvest_doy": 263.0,
+    "prev_yield_kg_ha": 5380.0
+  },
+  "raw_feature_defaults_source": "median of each column on the training split (analysis/notebooks/02_preprocessing_features.ipynb split, random_state=42). Used at inference time until Open-Meteo integration supplies real weather. growing_degree_days is included even though it was dropped from the model's own feature list by the Phase 2 correlation filter, because engineer_features() still needs it as an input to derive rainfall_efficiency and gdd_per_sunshine_hour.",
+  "climate_risk_thresholds": {
+    "spring_frost_days_p75": 5.0,
+    "summer_heat_days_p75": 22.0,
+    "rainfall_efficiency_p25": 0.357,
+    "source": "25th/75th percentile of the training split; used by the backend's rule-based (non-ML) climate risk heuristic, not the trained models."
+  },
+  "harvest_doy_by_category": {
+    "Early": 251.1,
+    "Normal": 263.4,
+    "Late": 275.9,
+    "source": "mean harvest_doy per harvest_category on the full dataset (analysis/notebooks/01_eda.ipynb section 3). Used to convert a predicted category into an approximate calendar date for the requested year -- a real statistic, not a per-vineyard forecast."
+  }
+}
