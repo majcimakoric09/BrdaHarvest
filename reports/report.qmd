@@ -5,19 +5,507 @@ date: last-modified
 format:
   html:
     toc: true
-  pdf:
-    toc: true
 ---
 
-## Introduction
+```{python}
+#| label: setup
+#| echo: false
+#| warning: false
 
-_Placeholder — report content will be written incrementally as analysis
-progresses._
+import sys
+from pathlib import Path
 
-## Data Overview
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
-## Methodology
+sys.path.append(str(Path.cwd().parent / "analysis" / "src"))
+from data import load_dataset
+from preprocessing import (
+    ALL_FEATURES,
+    BASE_NUMERIC_FEATURES,
+    CATEGORICAL_FEATURES,
+    CLASSIFICATION_TARGET,
+    CORRELATED_FEATURES_DROPPED,
+    ENGINEERED_NUMERIC_FEATURES,
+    LEAKAGE_COLUMNS,
+    NUMERIC_FEATURES,
+    REGRESSION_TARGET,
+    engineer_features,
+    find_correlated_features,
+    train_val_test_split,
+)
+from modeling import (
+    CLASSIFICATION_LABELS,
+    classification_candidates,
+    classification_leaderboard,
+    encode_classification_target,
+    evaluate_classifier,
+    evaluate_regressor,
+    regression_candidates,
+    regression_leaderboard,
+)
 
-## Results
+pd.set_option("display.max_columns", None)
+sns.set_theme(style="whitegrid")
 
-## Conclusion
+df_raw = load_dataset()
+df = engineer_features(df_raw.drop(columns=LEAKAGE_COLUMNS))
+train_df, val_df, test_df = train_val_test_split(df)
+trainval_df = pd.concat([train_df, val_df])
+
+X_train, X_val = train_df[ALL_FEATURES], val_df[ALL_FEATURES]
+X_trainval, X_test = trainval_df[ALL_FEATURES], test_df[ALL_FEATURES]
+
+y_train_clf = pd.Series(encode_classification_target(train_df[CLASSIFICATION_TARGET]))
+y_val_clf = pd.Series(encode_classification_target(val_df[CLASSIFICATION_TARGET]))
+y_trainval_clf = pd.Series(encode_classification_target(trainval_df[CLASSIFICATION_TARGET]))
+y_test_clf = pd.Series(encode_classification_target(test_df[CLASSIFICATION_TARGET]))
+
+y_train_reg, y_val_reg = train_df[REGRESSION_TARGET], val_df[REGRESSION_TARGET]
+y_trainval_reg, y_test_reg = trainval_df[REGRESSION_TARGET], test_df[REGRESSION_TARGET]
+
+clf_labels = list(range(len(CLASSIFICATION_LABELS)))
+```
+
+## 1. Problem and Business Context
+
+Goriška Brda is a wine-growing region in western Slovenia. Winery managers there need
+to plan two things ahead of the harvest: **when** to bring in crews and equipment, and
+**how much** fruit to expect, so that labor, storage, and sales commitments can be
+scheduled realistically. Both depend on the season's weather and are difficult to judge
+precisely from experience alone, especially as growing conditions vary year to year.
+
+This project builds a small machine learning application that predicts, for a given
+vineyard (grape variety, soil, elevation, location, vine age) and year, two outcomes:
+
+1. **Harvest timing** — a three-way classification: *Early*, *Normal*, or *Late*.
+2. **Expected yield** — a regression in kilograms per hectare (kg/ha).
+
+The intended use is as a **planning aid** for a winery manager, not a certified forecast —
+this framing is revisited in the business interpretation and limitations sections below,
+once the model's actual accuracy is on the table.
+
+## 2. Dataset Description and Sources
+
+The approved dataset contains 2,176 vineyard records spanning 1991–2024, combining
+vineyard characteristics (grape variety, soil type, location, elevation, vine age) with
+seasonal weather variables (temperature, rainfall, frost/heat days, growing degree days,
+humidity, sunshine, soil moisture) and harvest outcomes (timing and yield). Historical
+weather of this kind is consistent with compiling it from a source such as Open-Meteo's
+Archive API, and Eurostat-style regional statistics are the kind of source used to enrich
+a dataset like this **offline**, during data preparation — not something the application
+calls at prediction time.
+
+The live application (Phases 4–5) uses Open-Meteo differently: at prediction time, it
+calls Open-Meteo's **Archive API** for the requested year's actual historical weather
+(falling back to training-data seasonal averages when that isn't available — e.g. a
+future year). Eurostat is not called anywhere at runtime, by design. Section 16 covers
+this in more detail.
+
+```{python}
+#| label: dataset-overview
+#| echo: false
+
+n_locations = df_raw["location"].nunique()
+n_years = df_raw["year"].nunique()
+n_varieties = df_raw["grape_variety"].nunique()
+
+pd.DataFrame(
+    {
+        "metric": [
+            "Records", "Columns (raw)", "Locations", "Years covered", "Grape varieties",
+            "Soil types", "Mean yield (kg/ha)", "Mean harvest day-of-year",
+        ],
+        "value": [
+            len(df_raw), df_raw.shape[1], n_locations, f"{df_raw['year'].min()}-{df_raw['year'].max()}",
+            n_varieties, df_raw["soil_type"].nunique(),
+            round(df_raw["yield_kg_ha"].mean(), 1), round(df_raw["harvest_doy"].mean(), 1),
+        ],
+    }
+)
+```
+
+One structural note worth flagging up front: `n_locations x n_years x n_varieties` equals
+exactly the row count — this is a **fully balanced synthetic panel**, not organically
+collected data. That has consequences for how the results in this report should be read,
+discussed throughout and summarized in the limitations section.
+
+## 3. Exploratory Data Analysis
+
+Full exploration lives in `analysis/notebooks/01_eda.ipynb`; this section summarizes the
+findings that shaped every later decision.
+
+```{python}
+#| label: fig-targets
+#| echo: false
+#| fig-cap: "Target distributions: harvest_category (left) and yield_kg_ha (right)"
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+df_raw["harvest_category"].value_counts().reindex(["Early", "Normal", "Late"]).plot(
+    kind="bar", ax=axes[0], color=["#8fbf6a", "#e0a95c", "#b5493a"]
+)
+axes[0].set_title("harvest_category distribution")
+axes[0].set_ylabel("count")
+
+axes[1].hist(df_raw["yield_kg_ha"], bins=30, color="#6a5acd", edgecolor="white")
+axes[1].set_title("yield_kg_ha distribution")
+axes[1].set_xlabel("kg/ha")
+
+plt.tight_layout()
+plt.show()
+```
+
+`harvest_category` is close to balanced (759 Early / 728 Normal / 689 Late), so plain
+accuracy is a meaningful classification metric here without needing class reweighting.
+`yield_kg_ha` is roughly symmetric and unimodal, suitable for regression without a log
+transform.
+
+```{python}
+#| label: missingness
+#| echo: false
+
+missing = df_raw.isna().sum()
+missing = missing[missing > 0].sort_values(ascending=False)
+pd.DataFrame({"missing_count": missing, "missing_pct": (missing / len(df_raw) * 100).round(2)})
+```
+
+Missingness is small (under 3.5% per column) and concentrated in four columns —
+`min_spring_temp_C`, `humidity_pct`, `soil_moisture_pct`, `prev_yield_kg_ha` — consistent
+with injected, realistic record-keeping gaps rather than a structural data problem.
+
+## 4. Cleaning Decisions
+
+Two columns were dropped as **redundant**, not because they leak the outcome, but because
+they carry no independent information beyond a column already kept:
+
+- `grape_color` is fully determined by `grape_variety` (a 1:1 mapping) — dropped, keeping
+  the more specific `grape_variety`.
+- `vintage_age_years` turned out to be a disguised transform of `year` (≈ reference year
+  − `year`), essentially constant within a year and uncorrelated with `vine_age_years`
+  (r ≈ −0.01) — not a genuine vineyard attribute, and meaningless for predicting a future
+  vintage. Dropped in favor of `year` itself.
+
+Missing values are **not** imputed on the full dataset up front. Imputation (median for
+numeric columns, most-frequent for categorical) happens inside the modeling pipeline's
+`ColumnTransformer`, fit only on the training split — see Section 8.
+
+## 5. Data Leakage Discussion
+
+This was the most consequential part of the analysis. Several columns in the raw dataset
+looked predictive but are actually **computed from, or only knowable after**, the harvest
+outcome itself:
+
+| Column(s) | Why it's leakage |
+|---|---|
+| `harvest_doy`, `harvest_date` | `harvest_category` is a deterministic bucket of `harvest_doy` (Early ≤ 258, Normal 259–268, Late ≥ 269, non-overlapping) — using it as a feature lets the model read off the answer. |
+| `yield_category` | Same pattern: a clean, non-overlapping bucketing of `yield_kg_ha`. |
+| `gbai_score`, `ln_quality_index`, `est_price_eur`, `vintage_quality` | Quality/price indices correlated r = 0.51–0.65 with yield — read as scores computed *after* the harvest, not knowable in advance. |
+| `climate_risk` | Correlated with yield but of ambiguous, unverified provenance — excluded from the model; kept as a candidate for a separate rule-based (non-ML) UI field instead (used in Phase 4). |
+| `harvest_rainfall_mm`, `autumn_rainfall_mm`, `annual_rainfall_mm` | Rainfall measured during or after the harvest window — `harvest_rainfall_mm` can't exist before harvest happens by definition; `annual_rainfall_mm` was confirmed to correlate with `harvest_doy` almost as strongly as the other two, since a full-year total partially post-dates the harvest. |
+
+Beyond the historical-data argument, there's a **production-level** reason these columns
+had to go regardless: the live application calls a weather *forecast/archive* API at
+prediction time and cannot return a full-season total for a season that hasn't finished.
+Any feature not obtainable at the moment a prediction is requested is unusable in
+production, independent of what it looks like in the training data.
+
+## 6. Feature Engineering
+
+Six features were engineered from columns already cleared as safe:
+
+| Feature | Formula | Rationale |
+|---|---|---|
+| `heat_stress_index` | `summer_heat_days x growing_degree_days` | compounding heat exposure |
+| `rainfall_efficiency` | `(spring+summer rainfall) / growing_degree_days` | water received per unit of heat accumulated (drought-stress proxy) |
+| `frost_heat_ratio` | `spring_frost_days / summer_heat_days` | frost risk relative to heat exposure |
+| `gdd_per_sunshine_hour` | `growing_degree_days / sunshine_hours` | heat accumulation per hour of daylight |
+| `yield_lag_change` | this vineyard's yield 1 year ago − 2 years ago | short-term yield momentum |
+| `harvest_lag_change` | same idea for harvest timing | short-term harvest-timing drift |
+
+The two lag features are built exclusively from `prev_yield_kg_ha`/`prev_harvest_doy` —
+themselves already the *previous* year's actual outcome — shifted one row further back
+within each vineyard's own history. They never touch the current row's own target, so they
+stay leakage-safe under the same reasoning that cleared `prev_yield_kg_ha` itself.
+
+## 7. Feature Selection
+
+A correlation filter — computed on **training-split features only**, never touching the
+target — was applied to catch redundancy the engineering step and the original dataset
+both introduced:
+
+```{python}
+#| label: correlation-filter
+#| echo: false
+
+candidate_numeric = BASE_NUMERIC_FEATURES + ENGINEERED_NUMERIC_FEATURES
+dropped = find_correlated_features(train_df[candidate_numeric], candidate_numeric, threshold=0.9)
+corr = train_df[candidate_numeric].corr()
+
+pd.DataFrame(
+    [
+        {"dropped_feature": col, "redundant_with": corr[col].drop(col).abs().idxmax(), "r": round(corr.loc[col, corr[col].drop(col).abs().idxmax()], 3)}
+        for col in dropped
+    ]
+)
+```
+
+This is leakage-safe by construction — it only ever compares features to each other, fit
+on the training split alone, and the resulting drop-list is applied identically to
+validation/test. Two findings stand out: `growing_season_temp_C`, `temp_deviation_C`, and
+`growing_degree_days` are all **r = 1.000** with `avg_temperature_C` (the dataset derives
+them from one underlying temperature signal), and two of the engineered features
+(`heat_stress_index`, `frost_heat_ratio`) turned out to be near-duplicates of simpler
+features once that collapsed. Both are kept in the codebase as a transparent record of the
+process, but excluded from the model's final input list — dropping a feature you
+deliberately engineered, once evidence shows it's redundant, is a legitimate part of
+honest feature selection, not a mistake to hide.
+
+Final feature set: **`{python} len(CATEGORICAL_FEATURES)` categorical** and
+**`{python} len(NUMERIC_FEATURES)` numeric** features.
+
+## 8. Train / Validation / Test Split
+
+```{python}
+#| label: split-balance
+#| echo: false
+
+rows = []
+for name, split in [("train", train_df), ("val", val_df), ("test", test_df)]:
+    props = split[CLASSIFICATION_TARGET].value_counts(normalize=True).round(3)
+    rows.append({"split": name, "n": len(split), **props.to_dict(), "yield_mean": round(split[REGRESSION_TARGET].mean(), 0)})
+pd.DataFrame(rows)
+```
+
+The data is split into train (`{python} len(train_df)`) / validation
+(`{python} len(val_df)`) / test (`{python} len(test_df)`) sets, stratified on
+`harvest_category` with a fixed `random_state=42`. Class balance is nearly identical
+across all three splits, as expected from stratification — and critically, `yield_kg_ha`
+mean is also close across splits (within ~50 kg/ha) even without stratifying on it
+directly, confirming that **one split can safely serve both tasks** rather than
+maintaining two separate, harder-to-compare datasets. Missing-value imputation and
+feature scaling are fit exclusively on the training split (via the pipeline's
+`ColumnTransformer`) and only ever applied — never re-fit — to validation and test.
+
+## 9–11. Model Ladders and Leaderboards
+
+Model **selection** uses the validation split; the test set is touched once per target,
+for the model validation already selected — never used to pick between candidates.
+
+### Classification: `harvest_category`
+
+```{python}
+#| label: clf-leaderboard
+#| echo: false
+
+clf_candidates = classification_candidates()
+clf_board, clf_fitted = classification_leaderboard(clf_candidates, X_train, y_train_clf, X_val, y_val_clf, clf_labels)
+clf_board.round(3).sort_values("val_f1_macro", ascending=False)
+```
+
+```{python}
+#| label: clf-gap
+#| echo: false
+
+gap = clf_board[["model", "train_accuracy", "val_accuracy"]].copy()
+gap["gap"] = gap["train_accuracy"] - gap["val_accuracy"]
+gap.sort_values("gap", ascending=False).round(3)
+```
+
+**DummyClassifier** (always predicts the majority class) scores 34.9% accuracy, matching
+the class prior exactly, with ROC-AUC of 0.500 — no discriminative power, the floor every
+real model must clear.
+
+**DecisionTree**, deliberately left unconstrained (`max_depth=None`), memorizes the
+training set (100% train accuracy) and loses 30 points of accuracy on validation (69.7%) —
+a textbook overfitting signature, discussed further in Section 13.
+
+**XGBoost** also overfits with default hyperparameters (100% train, 78.3% validation, a
+22-point gap) — smaller than the raw tree, but still substantial.
+
+**LogisticRegression** has by far the smallest train-validation gap (85.5% → 81.3%, ~4
+points) and the *best* validation performance of all four candidates on every metric,
+including beating both tree-based models.
+
+### Regression: `yield_kg_ha`
+
+```{python}
+#| label: reg-leaderboard
+#| echo: false
+
+reg_candidates = regression_candidates()
+reg_board, reg_fitted = regression_leaderboard(reg_candidates, X_train, y_train_reg, X_val, y_val_reg)
+reg_board.round(3).sort_values("val_r2", ascending=False)
+```
+
+```{python}
+#| label: reg-gap
+#| echo: false
+
+gap = reg_board[["model", "train_r2", "val_r2"]].copy()
+gap["gap"] = gap["train_r2"] - gap["val_r2"]
+gap.sort_values("gap", ascending=False).round(3)
+```
+
+The same pattern repeats, more extremely. **DummyRegressor** scores R² ≈ 0 on both splits
+by construction. **DecisionTreeRegressor**, again unconstrained, fits the training data
+*exactly* (R²=1.00, zero error) and drops to R²=0.61 on validation — the worst overfitting
+in this report. **XGBoost** again overfits (train R²=1.00, val R²=0.75) and again
+underperforms the simpler linear model on validation. **Ridge** has the smallest gap
+(0.84 → 0.79) and the best validation R², MAE, and RMSE of all four candidates.
+
+In both tasks, a simple regularized linear model outperforming XGBoost isn't a fluke of
+this run — it directly reflects the tree-based models overfitting with untuned default
+hyperparameters on a modestly sized training set (1,522 rows). Hyperparameter tuning
+(constraining tree depth, XGBoost regularization) could plausibly change this ranking; it
+wasn't attempted in this phase of the project, and is flagged as a natural next step in
+Section 14.
+
+## 12. Test-Set Results (Selected Models Only)
+
+Based on validation performance, **Logistic Regression** and **Ridge** were selected as
+the final models. Each is retrained on train+validation combined (validation's job —
+selection — is complete, and more data improves the final model) before a single,
+final check against the held-out test set:
+
+```{python}
+#| label: test-results
+#| echo: false
+
+final_clf = classification_candidates()["LogisticRegression"]
+final_clf.fit(X_trainval, y_trainval_clf)
+test_metrics_clf = evaluate_classifier(final_clf, X_test, y_test_clf, clf_labels)
+
+final_reg = regression_candidates()["Ridge"]
+final_reg.fit(X_trainval, y_trainval_reg)
+test_metrics_reg = evaluate_regressor(final_reg, X_test, y_test_reg)
+
+pd.DataFrame(
+    [
+        {"target": "harvest_category (Logistic Regression)", **{k: round(v, 3) for k, v in test_metrics_clf.items()}},
+        {"target": "yield_kg_ha (Ridge)", **{k: round(v, 3) for k, v in test_metrics_reg.items()}},
+    ]
+).set_index("target")
+```
+
+Test performance is close to the validation numbers for both models — no sign that model
+selection overfit to the particular validation split.
+
+```{python}
+#| label: fig-confusion
+#| echo: false
+#| fig-cap: "Test-set confusion matrix — Logistic Regression"
+
+y_test_pred = final_clf.predict(X_test)
+cm = confusion_matrix(y_test_clf, y_test_pred, labels=clf_labels)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=CLASSIFICATION_LABELS)
+disp.plot(cmap="Blues", values_format="d")
+plt.title("Test set confusion matrix — Logistic Regression")
+plt.show()
+```
+
+Most confusion is between **adjacent** categories (Early/Normal, Normal/Late), not
+opposite ends — consistent with harvest timing being a continuous process discretized
+into three bins, where errors near a bin boundary are the least harmful kind of mistake.
+
+```{python}
+#| label: fig-pred-vs-actual
+#| echo: false
+#| fig-cap: "Test-set predicted vs actual yield — Ridge"
+
+y_test_pred_reg = final_reg.predict(X_test)
+
+plt.figure(figsize=(6, 6))
+plt.scatter(y_test_reg, y_test_pred_reg, alpha=0.4, edgecolor="none")
+lims = [min(y_test_reg.min(), y_test_pred_reg.min()), max(y_test_reg.max(), y_test_pred_reg.max())]
+plt.plot(lims, lims, color="firebrick", linestyle="--", label="perfect prediction")
+plt.xlabel("Actual yield (kg/ha)")
+plt.ylabel("Predicted yield (kg/ha)")
+plt.title(f"Test set: predicted vs actual (Ridge)  R²={test_metrics_reg['r2']:.3f}")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+Points cluster tightly around the diagonal with no obvious curvature or fan-shaped spread
+at the extremes — the model isn't systematically biased at high or low yields.
+
+## 13. Overfitting Discussion
+
+Both unconstrained decision trees (classification and regression) memorized their
+training data perfectly and lost 22–39 percentage points / R² on validation — the clearest
+overfitting evidence in this report, and expected: with 1,522 training rows and 43
+features after one-hot encoding, an unconstrained tree has more than enough capacity to
+carve out a leaf for nearly every row.
+
+XGBoost overfits too, with its untuned default hyperparameters (`max_depth=6`,
+`n_estimators=100`, no subsampling or early stopping) — smaller gaps than the raw trees
+(gradient boosting regularizes somewhat through shrinkage and averaging), but still
+enough to underperform the simpler linear models on both tasks. This is a genuine,
+somewhat counter-intuitive finding worth stating plainly: a more complex model is not
+automatically a better one, particularly with default settings on a training set of this
+size.
+
+## 14. Model Limitations
+
+- **The dataset is synthetic and perfectly balanced** — exactly 8 locations × 34 years ×
+  8 varieties, with no gaps in coverage. All metrics in this report are consequently
+  likely **optimistic** relative to what the same modeling approach would achieve on real,
+  messier winery records (irregular coverage, recording errors, missing years). These
+  numbers should be read as a ceiling on achievable performance, not a guarantee.
+- **No hyperparameter tuning was performed.** Both tree-based models likely have
+  meaningful headroom (constrained depth, regularization, early stopping) that wasn't
+  explored in this phase, to keep the work in scope.
+- **Extrapolation risk**: `year` is a model feature, and training data spans 1991–2024.
+  Predictions for years outside that range are extrapolations with no direct supporting
+  evidence.
+- **Weather at prediction time is not always live.** The application (Section 16) uses
+  real historical weather when Open-Meteo can supply it, and training-data seasonal
+  averages otherwise (e.g. a future year, or an unreachable API) — a prediction's accuracy
+  depends on which of those applied for that specific request.
+- **Vineyard history is defaulted, not looked up**, since the application has no database
+  of past user submissions yet — `prev_harvest_doy`/`prev_yield_kg_ha` use training-data
+  medians for every request rather than a specific vineyard's actual history.
+
+## 15. Business Interpretation
+
+At roughly 82% test-set classification accuracy and ~6% relative yield error (MAE of
+~328 kg/ha against a mean yield of ~5,300 kg/ha), these models are useful as a **planning
+aid** — for example, "harvest is trending Normal-to-Late, plan crew availability
+accordingly" — rather than a precise forecast a winery should commit resources to without
+human judgment, especially in atypical years the training data may not represent well.
+Given the synthetic-data caveat above, this framing should be treated as somewhat
+conservative until the approach can be validated against real winery records.
+
+## 16. How the React / FastAPI Application Uses the Model
+
+The application (built in Phases 4–5, kept separate from this analysis codebase) wires
+the two selected pipelines into a live prediction flow:
+
+1. A user submits six fields through the React form: grape variety, soil type, location,
+   elevation, vine age, and year — matching the assignment's specified inputs.
+2. The FastAPI backend fetches historical weather for that year from Open-Meteo's Archive
+   API (Dobrovo coordinates, used as one representative point for the whole region), field
+   by field — any weather field whose time window isn't fully available (e.g. a
+   still-in-progress season) falls back individually to a training-data default, rather
+   than failing the whole request.
+3. The backend runs `analysis/src/preprocessing.engineer_features()` — the **same
+   function** used during training — on the assembled row, so inference never risks
+   drifting from how the model was actually trained.
+4. Both saved pipelines (`models/classification_model.pkl`, `models/regression_model.pkl`)
+   run on that row. Each is a complete `Pipeline` (preprocessing + model), so there is no
+   separate preprocessor artifact to keep in sync.
+5. A simple **rule-based** (not machine-learned) climate-risk heuristic — built from
+   already-vetted-safe weather signals, thresholded against training-data percentiles —
+   adds a risk level and main risk factor, and a small templated business recommendation
+   is composed from the harvest-timing and risk results.
+6. The response — harvest category, confidence, expected yield, climate risk, main risk
+   factor, recommendation, and where the weather data came from — is returned to the React
+   UI, which shows all of it, including whether live or default weather was used for that
+   specific prediction.
+
+Eurostat is not called anywhere in this live flow, consistent with the project proposal's
+intent for it as an offline enrichment source only.

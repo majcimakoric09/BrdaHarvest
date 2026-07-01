@@ -6,5 +6,11 @@ format:
   html:
     toc: true
     theme: cosmo
-  pdf:
-    toc: true
+    code-fold: true
+    embed-resources: true
+
+# Registered by `python -m ipykernel install --user --name harvest-analysis`
+# from analysis/.venv (see analysis/README.md). PDF output is intentionally
+# not configured here -- it needs a separate LaTeX toolchain
+# (`quarto install tinytex`), an extra step beyond this phase's scope.
+jupyter: harvest-analysis
