@@ -1,0 +1,9 @@
+# Repo-wide development tooling (shared across analysis/ and backend/).
+# Component-specific runtime dependencies live in:
+#   analysis/requirements.txt
+#   backend/requirements.txt
+
+black
+ruff
+pytest
+pre-commit

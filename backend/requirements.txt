@@ -1,0 +1,6 @@
+# Core API dependencies. ML inference dependencies (scikit-learn, etc.)
+# will be added once a trained model is integrated.
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv

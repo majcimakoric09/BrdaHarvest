@@ -1,0 +1,23 @@
+---
+title: "Goriška Brda Harvest Prediction — Analysis Report"
+author: "Maja"
+date: last-modified
+format:
+  html:
+    toc: true
+  pdf:
+    toc: true
+---
+
+## Introduction
+
+_Placeholder — report content will be written incrementally as analysis
+progresses._
+
+## Data Overview
+
+## Methodology
+
+## Results
+
+## Conclusion

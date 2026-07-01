@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Environment variables ---
+.env
+.env.local
+*/.env
+!*/.env.example
+
+# --- Node / React (frontend) ---
+node_modules/
+dist/
+frontend/dist/
+.vite/
+
+# --- ML model artifacts ---
+models/*.pkl
+models/*.joblib
+models/*.onnx
+models/artifacts/*
+!models/artifacts/.gitkeep
+
+# --- Quarto (reports/slides) ---
+/.quarto/
+*_files/
+*_cache/
+_output/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# --- Logs ---
+*.log

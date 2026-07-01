@@ -1,0 +1,10 @@
+---
+title: "Goriška Brda Harvest Prediction"
+subtitle: "Capstone Project"
+author: "Maja"
+format: revealjs
+---
+
+## Placeholder
+
+Content will be added once analysis and modeling are complete.
