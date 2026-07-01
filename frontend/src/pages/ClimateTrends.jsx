@@ -28,10 +28,16 @@ function ClimateTrends() {
   const [trends, setTrends] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
+  function loadTrends() {
+    setError(null)
+    setTrends(null)
     getClimateTrends()
       .then((data) => setTrends(data.records))
       .catch((err) => setError(err.message))
+  }
+
+  useEffect(() => {
+    loadTrends()
   }, [])
 
   return (
@@ -42,7 +48,7 @@ function ClimateTrends() {
         historical dataset the models were trained on.
       </p>
 
-      {error && <div className="mt-6"><ErrorState message={`Couldn't load climate trends: ${error}`} /></div>}
+      {error && <div className="mt-6"><ErrorState message={`Couldn't load climate trends: ${error}`} onRetry={loadTrends} /></div>}
       {!trends && !error && <div className="mt-6"><LoadingState label="Loading climate history…" /></div>}
 
       {trends && (

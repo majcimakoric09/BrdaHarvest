@@ -18,6 +18,11 @@ class VarietyCount(BaseModel):
     count: int
 
 
+class LocationCount(BaseModel):
+    location: str
+    count: int
+
+
 class YieldByVariety(BaseModel):
     grape_variety: str
     mean_yield_kg_ha: float
@@ -36,4 +41,5 @@ class DashboardSummary(BaseModel):
     harvest_category_counts: HarvestCategoryCounts
     yield_histogram: list[YieldHistogramBin]
     variety_counts: list[VarietyCount]
+    location_counts: list[LocationCount]
     yield_by_variety: list[YieldByVariety]

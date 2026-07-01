@@ -152,10 +152,16 @@ function ModelPerformance() {
   const [perf, setPerf] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
+  function loadPerformance() {
+    setError(null)
+    setPerf(null)
     getModelPerformance()
       .then(setPerf)
       .catch((err) => setError(err.message))
+  }
+
+  useEffect(() => {
+    loadPerformance()
   }, [])
 
   const predVsActual = perf
@@ -181,7 +187,7 @@ function ModelPerformance() {
         training or model selection.
       </p>
 
-      {error && <div className="mt-6"><ErrorState message={`Couldn't load model performance: ${error}`} /></div>}
+      {error && <div className="mt-6"><ErrorState message={`Couldn't load model performance: ${error}`} onRetry={loadPerformance} /></div>}
       {!perf && !error && <div className="mt-6"><LoadingState label="Loading evaluation results…" /></div>}
 
       {perf && (

@@ -267,6 +267,27 @@ honest feature selection, not a mistake to hide.
 Final feature set: **`{python} len(CATEGORICAL_FEATURES)` categorical** and
 **`{python} len(NUMERIC_FEATURES)` numeric** features.
 
+```{python}
+#| label: weather-feature-count
+#| echo: false
+
+WEATHER_FEATURES = [
+    "avg_temperature_C", "min_spring_temp_C", "summer_heat_days", "spring_frost_days",
+    "winter_rainfall_mm", "spring_rainfall_mm", "summer_rainfall_mm", "rainfall_deviation_mm",
+    "humidity_pct", "sunshine_hours", "soil_moisture_pct", "rainfall_efficiency",
+    "gdd_per_sunshine_hour",
+]
+weather_in_final_set = [f for f in NUMERIC_FEATURES if f in WEATHER_FEATURES]
+print(f"{len(weather_in_final_set)} of {len(NUMERIC_FEATURES)} numeric features are weather-derived:")
+print(weather_in_final_set)
+```
+
+Weather is not a peripheral input here — it's close to two-thirds of the numeric feature
+set. This matters for how the application should be read: the model isn't primarily
+learning from vineyard characteristics with weather as an afterthought, it's substantially
+a weather model with vineyard/variety context layered on top. Section 12 confirms this
+isn't just a count — weather features carry real, learned weight in both trained models.
+
 ## 8. Train / Validation / Test Split
 
 ```{python}
@@ -432,6 +453,45 @@ plt.show()
 
 Points cluster tightly around the diagonal with no obvious curvature or fan-shaped spread
 at the extremes — the model isn't systematically biased at high or low yields.
+
+### Weather's role in the trained models
+
+Counting weather features in the final input list (Section 7) shows they're well
+represented, but representation isn't the same as influence. Both final models are linear
+(Logistic Regression, Ridge), so their coefficients are a direct, honest measure of what
+each feature actually contributes — not an approximation:
+
+```{python}
+#| label: weather-feature-importance
+#| echo: false
+
+def _feature_importance_table(pipeline, coefs):
+    names = [n.split("__", 1)[1] for n in pipeline.named_steps["preprocessor"].get_feature_names_out()]
+    importance = np.abs(coefs)
+    df = pd.DataFrame({"feature": names, "importance": importance})
+    df["is_weather"] = df["feature"].isin(WEATHER_FEATURES)
+    return df.sort_values("importance", ascending=False)
+
+clf_importance = _feature_importance_table(final_clf, np.abs(final_clf.named_steps["model"].coef_).mean(axis=0))
+reg_importance = _feature_importance_table(final_reg, final_reg.named_steps["model"].coef_)
+
+print("Classification — top 5 features overall:")
+print(clf_importance.head(5)[["feature", "importance", "is_weather"]].to_string(index=False))
+print(f"\nHighest-ranked weather feature: {clf_importance[clf_importance['is_weather']].iloc[0]['feature']}"
+      f" (rank {clf_importance.reset_index(drop=True).index[clf_importance['feature'] == clf_importance[clf_importance['is_weather']].iloc[0]['feature']][0] + 1} of {len(clf_importance)})")
+
+print("\nRegression — top 5 features overall:")
+print(reg_importance.head(5)[["feature", "importance", "is_weather"]].to_string(index=False))
+print(f"\nHighest-ranked weather feature: {reg_importance[reg_importance['is_weather']].iloc[0]['feature']}"
+      f" (rank {reg_importance.reset_index(drop=True).index[reg_importance['feature'] == reg_importance[reg_importance['is_weather']].iloc[0]['feature']][0] + 1} of {len(reg_importance)})")
+```
+
+`spring_frost_days` is the single most influential non-categorical feature in **both**
+models — ahead of most grape-variety indicators. Weather isn't just present in the input
+list; it's doing real, measurable work in both trained models. This is also why the live
+application calls Open-Meteo at prediction time (Section 16) rather than relying solely on
+static vineyard characteristics — a prediction built only from grape variety, soil, and
+elevation would be missing the majority of what the model actually learned from.
 
 ## 13. Overfitting Discussion
 

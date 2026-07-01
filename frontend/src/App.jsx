@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import HarvestPrediction from './pages/HarvestPrediction.jsx'
 import ClimateTrends from './pages/ClimateTrends.jsx'
 import ModelPerformance from './pages/ModelPerformance.jsx'
+import VineyardIntelligence from './pages/VineyardIntelligence.jsx'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/predict" element={<HarvestPrediction />} />
         <Route path="/climate" element={<ClimateTrends />} />
         <Route path="/performance" element={<ModelPerformance />} />
+        <Route path="/intelligence" element={<VineyardIntelligence />} />
       </Routes>
     </Layout>
   )

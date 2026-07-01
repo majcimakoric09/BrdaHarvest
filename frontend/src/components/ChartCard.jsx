@@ -1,6 +1,6 @@
 function ChartCard({ title, description, children }) {
   return (
-    <div className="min-w-0 rounded-xl border border-brda-beige bg-white p-5 shadow-sm">
+    <div className="min-w-0 rounded-2xl border border-brda-beige bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6">
       <h3 className="font-display text-lg font-semibold text-brda-forest">{title}</h3>
       {description && <p className="mb-3 text-sm text-brda-forest/60">{description}</p>}
       {/* min-w-0 is required here: Recharts' ResponsiveContainer measures the

@@ -25,6 +25,10 @@ export function getModelPerformance() {
   return request('/model/performance')
 }
 
+export function getVineyardIntelligence() {
+  return request('/vineyard-intelligence')
+}
+
 export function predictHarvest(payload) {
   return request('/predict', {
     method: 'POST',

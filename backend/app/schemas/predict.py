@@ -34,6 +34,14 @@ class PredictionRequest(BaseModel):
     year: int = Field(ge=1991, le=2035)
 
 
+class WeatherInput(BaseModel):
+    feature: str
+    label: str
+    value: float
+    unit: str
+    source: WeatherSource
+
+
 class PredictionResponse(BaseModel):
     harvest_category: HarvestCategory
     classification_confidence: float
@@ -44,3 +52,4 @@ class PredictionResponse(BaseModel):
     business_recommendation: str
     weather_source: WeatherSource
     weather_summary: str
+    weather_inputs: list[WeatherInput]

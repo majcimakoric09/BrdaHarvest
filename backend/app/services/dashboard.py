@@ -39,6 +39,11 @@ def get_summary() -> dict:
         for variety, count in df["grape_variety"].value_counts().items()
     ]
 
+    location_counts = [
+        {"location": location, "count": int(count)}
+        for location, count in df["location"].value_counts().items()
+    ]
+
     yield_by_variety = [
         {"grape_variety": variety, "mean_yield_kg_ha": round(float(mean_yield), 1)}
         for variety, mean_yield in df.groupby("grape_variety")["yield_kg_ha"]
@@ -66,5 +71,6 @@ def get_summary() -> dict:
         },
         "yield_histogram": yield_histogram,
         "variety_counts": variety_counts,
+        "location_counts": location_counts,
         "yield_by_variety": yield_by_variety,
     }

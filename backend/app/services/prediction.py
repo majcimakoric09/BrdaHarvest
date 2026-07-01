@@ -111,6 +111,23 @@ def _climate_risk(row: pd.Series) -> tuple[str, str]:
     return level, main_factor
 
 
+# Human-readable label + unit for each weather field the model consumes,
+# in the order shown to the user. Presentation metadata only — the field
+# names/values themselves come from weather.WEATHER_FIELDS.
+_WEATHER_FIELD_LABELS = {
+    "avg_temperature_C": ("Average temperature", "°C"),
+    "min_spring_temp_C": ("Minimum spring temperature", "°C"),
+    "summer_heat_days": ("Summer heat days", "days"),
+    "spring_frost_days": ("Spring frost days", "days"),
+    "winter_rainfall_mm": ("Winter rainfall", "mm"),
+    "spring_rainfall_mm": ("Spring rainfall", "mm"),
+    "summer_rainfall_mm": ("Summer rainfall", "mm"),
+    "rainfall_deviation_mm": ("Rainfall deviation from normal", "mm"),
+    "humidity_pct": ("Humidity", "%"),
+    "sunshine_hours": ("Sunshine hours", "hours"),
+    "soil_moisture_pct": ("Soil moisture", "%"),
+}
+
 _TIMING_ADVICE = {
     "Early": "Harvest is trending early — begin preparing crews and equipment ahead of the usual schedule.",
     "Normal": "Harvest is trending close to the typical seasonal schedule — plan crews around the usual window.",
@@ -121,17 +138,26 @@ _RISK_ADVICE = {
     "Medium": "Keep an eye on {factor} — it's elevated relative to typical conditions for this vineyard.",
     "High": "{factor} is significantly elevated — consider contingency planning (e.g. frost protection, irrigation, or adjusted crew timing) before the harvest window.",
 }
+_WEATHER_SOURCE_CLAUSE = {
+    "open-meteo": "Based on this year's observed weather conditions",
+    "training-defaults": "Based on typical seasonal weather for this region (live conditions weren't available for this year)",
+}
 
 
-def _business_recommendation(harvest_category: str, climate_risk: str, main_risk_factor: str) -> str:
-    return f"{_TIMING_ADVICE[harvest_category]} {_RISK_ADVICE[climate_risk].format(factor=main_risk_factor)}"
+def _business_recommendation(
+    harvest_category: str, climate_risk: str, main_risk_factor: str, weather_source: str
+) -> str:
+    weather_clause = _WEATHER_SOURCE_CLAUSE[weather_source]
+    timing = _TIMING_ADVICE[harvest_category]
+    risk = _RISK_ADVICE[climate_risk].format(factor=main_risk_factor)
+    return f"{weather_clause}: {timing} {risk}"
 
 
 def predict(request) -> dict:
     if not models_loaded():
         raise ModelsNotReadyError(_load_error or "models are not loaded")
 
-    weather_fields, weather_source, weather_summary = weather.fetch_weather(request.year)
+    weather_fields, weather_source, weather_summary, field_sources = weather.fetch_weather(request.year)
     row_df = _build_feature_row(request, weather_fields)
 
     class_idx = int(_classification_model.predict(row_df)[0])
@@ -142,11 +168,26 @@ def predict(request) -> dict:
     expected_yield = float(_regression_model.predict(row_df)[0])
 
     climate_risk, main_risk_factor = _climate_risk(row_df.iloc[0])
-    recommendation = _business_recommendation(harvest_category, climate_risk, main_risk_factor)
+    recommendation = _business_recommendation(harvest_category, climate_risk, main_risk_factor, weather_source)
 
     # Approximate, not a per-vineyard forecast: the real mean harvest_doy for
     # this category (see feature_metadata.json) converted to the requested year.
     estimated_harvest_date = doy_to_date_string(request.year, _HARVEST_DOY_BY_CATEGORY[harvest_category])
+
+    # The actual values fed into the model for this request, one entry per
+    # weather field, each tagged with whether it came from Open-Meteo or a
+    # training-data default -- so the UI can show precisely what drove the
+    # prediction instead of only a one-line summary.
+    weather_inputs = [
+        {
+            "feature": name,
+            "label": label,
+            "value": weather_fields[name],
+            "unit": unit,
+            "source": field_sources[name],
+        }
+        for name, (label, unit) in _WEATHER_FIELD_LABELS.items()
+    ]
 
     return {
         "harvest_category": harvest_category,
@@ -158,4 +199,5 @@ def predict(request) -> dict:
         "business_recommendation": recommendation,
         "weather_source": weather_source,
         "weather_summary": weather_summary,
+        "weather_inputs": weather_inputs,
     }

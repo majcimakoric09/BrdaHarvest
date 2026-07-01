@@ -93,11 +93,14 @@ def _season_windows(year: int) -> dict[str, tuple[date, date]]:
     }
 
 
-def fetch_weather(year: int) -> tuple[dict, str, str]:
-    """Returns (weather_fields, source, summary).
+def fetch_weather(year: int) -> tuple[dict, str, str, dict]:
+    """Returns (weather_fields, source, summary, field_sources).
 
     weather_fields always has all 11 WEATHER_FIELDS keys populated -- each
     one individually either real Open-Meteo data or the training default.
+    field_sources maps each of those same field names to "open-meteo" or
+    "training-defaults", so callers (the API response, the UI) can show
+    exactly which values were live and which weren't, per field.
     """
     windows = _season_windows(year)
     full_start, full_end = windows["full"]
@@ -110,6 +113,7 @@ def fetch_weather(year: int) -> tuple[dict, str, str]:
             "training-defaults",
             f"{year} is too far in the future for historical weather data — "
             "used training-data seasonal averages for all weather fields.",
+            {name: "training-defaults" for name in WEATHER_FIELDS},
         )
 
     try:
@@ -136,6 +140,7 @@ def fetch_weather(year: int) -> tuple[dict, str, str]:
             "training-defaults",
             f"Open-Meteo request failed ({type(exc).__name__}) — "
             "used training-data seasonal averages for all weather fields.",
+            {name: "training-defaults" for name in WEATHER_FIELDS},
         )
 
     def window_slice(name: str):
@@ -193,4 +198,7 @@ def fetch_weather(year: int) -> tuple[dict, str, str]:
         f"({len(used_live)}/{len(WEATHER_FIELDS)} fields from live data"
         + (f"; used seasonal defaults for {', '.join(used_default)})" if used_default else ")")
     )
-    return fields, source, summary
+    field_sources = {
+        name: ("open-meteo" if name in used_live else "training-defaults") for name in WEATHER_FIELDS
+    }
+    return fields, source, summary, field_sources

@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Grape, CloudSun, BarChart3, X } from 'lucide-react'
+import { LayoutDashboard, Grape, CloudSun, BarChart3, Newspaper, X } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/predict', label: 'Harvest Prediction', icon: Grape },
   { to: '/climate', label: 'Climate Trends', icon: CloudSun },
   { to: '/performance', label: 'Model Performance', icon: BarChart3 },
+  { to: '/intelligence', label: 'Vineyard Intelligence', icon: Newspaper },
 ]
 
 function Sidebar({ onNavigate, onClose }) {
