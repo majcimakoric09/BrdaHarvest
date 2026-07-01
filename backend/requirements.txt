@@ -1,6 +1,12 @@
-# Core API dependencies. ML inference dependencies (scikit-learn, etc.)
-# will be added once a trained model is integrated.
+# Core API dependencies, plus ML inference dependencies needed to load and
+# run the trained sklearn Pipelines from models/. No xgboost here — the
+# selected final models (Phase 3) are LogisticRegression and Ridge.
 fastapi
 uvicorn[standard]
 pydantic
 python-dotenv
+pandas
+numpy
+scikit-learn
+joblib
+requests
