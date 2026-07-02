@@ -32,7 +32,13 @@ with open(MODELS_DIR / "feature_metadata.json") as f:
 CLASSIFICATION_LABELS: list[str] = _metadata["classification_labels"]
 _RAW_DEFAULTS: dict = _metadata["raw_feature_defaults"]
 _RISK_THRESHOLDS: dict = _metadata["climate_risk_thresholds"]
-_HARVEST_DOY_BY_CATEGORY: dict = _metadata["harvest_doy_by_category"]
+
+_WEATHER_ANALOG: dict = _metadata["weather_analog_years"]
+_ANALOG_WEATHER_FEATURES: list[str] = _WEATHER_ANALOG["weather_features"]
+_ANALOG_WEATHER_BY_YEAR: dict = _WEATHER_ANALOG["weather_by_year"]
+_ANALOG_FEATURE_STATS: dict = _WEATHER_ANALOG["weather_feature_stats"]
+_ANALOG_HARVEST_DOY_BY_YEAR_VARIETY: dict = _WEATHER_ANALOG["harvest_doy_by_year_variety"]
+K_NEAREST_ANALOG_YEARS = 5
 
 try:
     _classification_model = joblib.load(MODELS_DIR / "classification_model.pkl")
@@ -111,6 +117,54 @@ def _climate_risk(row: pd.Series) -> tuple[str, str]:
     return level, main_factor
 
 
+def _estimate_harvest_doy(weather_fields: dict, grape_variety: str) -> float:
+    """Estimates a specific harvest day-of-year by directly comparing this
+    request's real resolved weather against every one of the 34 historical
+    years' real weather, and blending the real harvest_doy of the years
+    that actually looked most similar -- "which past years had weather
+    like this one, and when did harvest actually happen in those years."
+
+    This replaced an earlier version that only used the classifier's
+    predicted category (Early/Normal/Late) to look up a date -- two
+    requests both landing in "Normal" but with meaningfully different
+    weather (e.g. 2 vs 8 spring frost days) still got dates pulled from
+    the same narrow category-level pool. Comparing weather directly,
+    year-by-year, is more responsive to the specific weather values
+    actually resolved for this request instead of collapsing them into a
+    3-way classification first.
+
+    Each of the 11 weather features is standardized (z-scored using its
+    real mean/std across the 34 years) before computing distance, so
+    rainfall in mm doesn't dominate frost days measured in single digits.
+    The K=5 most similar years are blended with inverse-distance
+    weighting -- a standard, transparent k-nearest-neighbours regression,
+    not a new trained model, and no ML pipeline retraining involved.
+    """
+    distances = []
+    for year, year_weather in _ANALOG_WEATHER_BY_YEAR.items():
+        squared_dist = 0.0
+        for feature in _ANALOG_WEATHER_FEATURES:
+            std = _ANALOG_FEATURE_STATS[feature]["std"] or 1.0
+            mean = _ANALOG_FEATURE_STATS[feature]["mean"]
+            z_request = (weather_fields[feature] - mean) / std
+            z_year = (year_weather[feature] - mean) / std
+            squared_dist += (z_request - z_year) ** 2
+        distances.append((year, squared_dist**0.5))
+
+    distances.sort(key=lambda pair: pair[1])
+    nearest_years = distances[:K_NEAREST_ANALOG_YEARS]
+
+    weighted_sum = 0.0
+    weight_total = 0.0
+    for year, dist in nearest_years:
+        doy = _ANALOG_HARVEST_DOY_BY_YEAR_VARIETY[year][grape_variety]
+        weight = 1.0 / (dist + 1e-6)  # +epsilon guards an exact-match zero distance
+        weighted_sum += weight * doy
+        weight_total += weight
+
+    return weighted_sum / weight_total
+
+
 # Human-readable label + unit for each weather field the model consumes,
 # in the order shown to the user. Presentation metadata only — the field
 # names/values themselves come from weather.WEATHER_FIELDS.
@@ -170,9 +224,11 @@ def predict(request) -> dict:
     climate_risk, main_risk_factor = _climate_risk(row_df.iloc[0])
     recommendation = _business_recommendation(harvest_category, climate_risk, main_risk_factor, weather_source)
 
-    # Approximate, not a per-vineyard forecast: the real mean harvest_doy for
-    # this category (see feature_metadata.json) converted to the requested year.
-    estimated_harvest_date = doy_to_date_string(request.year, _HARVEST_DOY_BY_CATEGORY[harvest_category])
+    # Approximate, not a per-vineyard forecast: this year's resolved weather
+    # compared against all 34 real historical years (see _estimate_harvest_doy
+    # above), converted to the requested year.
+    estimated_doy = _estimate_harvest_doy(weather_fields, request.grape_variety)
+    estimated_harvest_date = doy_to_date_string(request.year, estimated_doy)
 
     # The actual values fed into the model for this request, one entry per
     # weather field, each tagged with whether it came from Open-Meteo or a

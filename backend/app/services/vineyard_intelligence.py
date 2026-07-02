@@ -166,16 +166,21 @@ def _seasonal_tips(today: date) -> list[dict]:
     ]
 
 
-def _weather() -> dict:
-    """Real short-term forecast for Dobrovo (Open-Meteo's forecast API, not
-    the historical archive used elsewhere) -- simple threshold rules, same
-    style as prediction.py's rule-based climate_risk heuristic, not ML."""
+def _weather(latitude: float = DOBROVO_LATITUDE, longitude: float = DOBROVO_LONGITUDE) -> dict:
+    """Real short-term forecast for the given coordinates (Open-Meteo's
+    forecast API, not the historical archive used elsewhere) -- simple
+    threshold rules, same style as prediction.py's rule-based climate_risk
+    heuristic, not ML. Defaults to Dobrovo for the main Vineyard
+    Intelligence page load; the dedicated per-location weather endpoint
+    (get_weather_for_location below) passes a different village's real
+    coordinates so a user can monitor any of the villages, without
+    re-fetching news/podcasts/etc. on every location change."""
     try:
         response = requests.get(
             FORECAST_URL,
             params={
-                "latitude": DOBROVO_LATITUDE,
-                "longitude": DOBROVO_LONGITUDE,
+                "latitude": latitude,
+                "longitude": longitude,
                 "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum",
                 "forecast_days": 7,
                 "timezone": "auto",
@@ -371,3 +376,12 @@ def get_vineyard_intelligence() -> dict:
         "industry_insights": _industry_insights(),
         "events": _events(),
     }
+
+
+def get_weather_for_location(latitude: float, longitude: float) -> dict:
+    """Real Open-Meteo forecast for an arbitrary vineyard location, used by
+    the Weather Alerts location selector on the Vineyard Intelligence page.
+    Coordinates come from the frontend's shared LOCATION_COORDS mapping --
+    this endpoint is intentionally location-name-agnostic (just lat/lon),
+    so it doesn't need its own copy of the village list."""
+    return _weather(latitude, longitude)

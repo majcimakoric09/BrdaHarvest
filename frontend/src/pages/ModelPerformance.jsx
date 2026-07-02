@@ -10,6 +10,72 @@ import LoadingState from '../components/LoadingState.jsx'
 import ErrorState from '../components/ErrorState.jsx'
 import { getModelPerformance } from '../services/api.js'
 
+// Presentation-only: maps the model's real internal feature names to
+// business-friendly labels for display. Never touches the underlying
+// data, values, or ordering -- charts still sort/plot by the raw
+// `feature` string via dataKey; this only changes what's *rendered* for
+// axis ticks and tooltips.
+const FEATURE_LABELS = {
+  year: 'Year',
+  elevation_m: 'Elevation',
+  vine_age_years: 'Vine Age',
+  avg_temperature_C: 'Average Growing Temperature',
+  min_spring_temp_C: 'Minimum Spring Temperature',
+  summer_heat_days: 'Summer Heat Days',
+  spring_frost_days: 'Spring Frost Days',
+  winter_rainfall_mm: 'Winter Rainfall',
+  spring_rainfall_mm: 'Spring Rainfall',
+  summer_rainfall_mm: 'Summer Rainfall',
+  rainfall_deviation_mm: 'Rainfall Deviation from Normal',
+  humidity_pct: 'Humidity',
+  sunshine_hours: 'Sunshine Hours',
+  soil_moisture_pct: 'Soil Moisture',
+  heat_frost_ratio: 'Heat-to-Frost Ratio',
+  prev_harvest_doy: 'Previous Harvest Timing',
+  prev_yield_kg_ha: "Previous Year's Yield",
+  rainfall_efficiency: 'Rainfall Efficiency',
+  gdd_per_sunshine_hour: 'Growing Degree Days per Sunshine Hour',
+  yield_lag_change: 'Yield Change from Previous Year',
+  harvest_lag_change: 'Harvest Timing Change',
+
+  'grape_variety_Cabernet Sauvignon': 'Cabernet Sauvignon Variety',
+  grape_variety_Chardonnay: 'Chardonnay Variety',
+  grape_variety_Malvazija: 'Malvazija Variety',
+  grape_variety_Merlot: 'Merlot Variety',
+  'grape_variety_Pinot Grigio': 'Pinot Grigio Variety',
+  'grape_variety_Pinot Noir': 'Pinot Noir Variety',
+  grape_variety_Rebula: 'Rebula Variety',
+  'grape_variety_Sauvignon Blanc': 'Sauvignon Blanc Variety',
+
+  soil_type_Clay: 'Clay Soil',
+  'soil_type_Clay-Loam': 'Clay-Loam Soil',
+  soil_type_Loam: 'Loam Soil',
+  soil_type_Marl: 'Marl Soil',
+  'soil_type_Marl-Loam': 'Marl-Loam Soil',
+  'soil_type_Sandy-Loam': 'Sandy-Loam Soil',
+
+  location_Biljana: 'Biljana Location',
+  location_Cerovo: 'Cerovo Location',
+  location_Dobrovo: 'Dobrovo Location',
+  location_Kozana: 'Kozana Location',
+  location_Medana: 'Medana Location',
+  location_Neblo: 'Neblo Location',
+  'location_Vipolže': 'Vipolže Location',
+  'location_Šmartno': 'Šmartno Location',
+}
+
+// Fallback for any feature name not in the table above (shouldn't happen
+// with the current fixed feature set, but keeps the chart readable rather
+// than showing a raw technical name if it ever does): turns
+// "some_raw_name" into "Some Raw Name".
+function getFeatureLabel(rawName) {
+  if (FEATURE_LABELS[rawName]) return FEATURE_LABELS[rawName]
+  return rawName
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 function Chart({ children }) {
   return (
     <div style={{ height: 300, width: '100%' }}>
@@ -121,14 +187,23 @@ function ConfusionMatrix({ labels, matrix }) {
 }
 
 function FeatureImportanceChart({ data }) {
-  const chartData = [...data].reverse() // largest at top
+  const chartData = [...data].reverse() // largest at top -- unchanged
   return (
     <Chart>
       <BarChart data={chartData} layout="vertical" margin={{ left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#EFE6D2" />
         <XAxis type="number" tick={{ fontSize: 11 }} />
-        <YAxis type="category" dataKey="feature" width={150} tick={{ fontSize: 11 }} />
-        <Tooltip formatter={(value) => [value.toFixed(3), 'Importance']} />
+        <YAxis
+          type="category"
+          dataKey="feature"
+          width={190}
+          tick={{ fontSize: 10 }}
+          tickFormatter={getFeatureLabel}
+        />
+        <Tooltip
+          formatter={(value) => [value.toFixed(3), 'Importance']}
+          labelFormatter={getFeatureLabel}
+        />
         <Bar dataKey="importance" fill="#4C7A5B" radius={[0, 3, 3, 0]} isAnimationActive={false} />
       </BarChart>
     </Chart>
@@ -270,13 +345,20 @@ function ModelPerformance() {
           <section className="mt-10">
             <h2 className="font-display text-xl font-semibold text-brda-forest">Feature Importance</h2>
             <p className="text-sm text-brda-forest/60">
-              Mean absolute coefficient magnitude from each selected (linear) model — top 15 features.
+              Which vineyard and weather factors matter most to the models, ranked by how much
+              each one actually influences the prediction — the top 15 factors for each.
             </p>
             <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <ChartCard title="Classification" description="Logistic Regression coefficients.">
+              <ChartCard
+                title="Harvest Timing Factors"
+                description="What most influences whether harvest is predicted Early, Normal, or Late. Longer bars mean that factor has a bigger effect on the timing prediction."
+              >
                 <FeatureImportanceChart data={perf.feature_importance.classification} />
               </ChartCard>
-              <ChartCard title="Regression" description="Ridge coefficients.">
+              <ChartCard
+                title="Yield Factors"
+                description="What most influences the predicted grape yield (kg/ha). Longer bars mean that factor has a bigger effect on the yield prediction."
+              >
                 <FeatureImportanceChart data={perf.feature_importance.regression} />
               </ChartCard>
             </div>

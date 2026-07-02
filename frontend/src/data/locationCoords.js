@@ -15,6 +15,7 @@ export const LOCATION_COORDS = {
   Biljana: { lat: 45.9972, lon: 13.5348 },
   Cerovo: { lat: 45.9799, lon: 13.5585 },
   Dobrovo: { lat: 45.9436, lon: 13.5994 },
+  Gonjače: { lat: 46.0117, lon: 13.5668 },
   Kozana: { lat: 45.9921, lon: 13.5494 },
   Medana: { lat: 45.9851, lon: 13.5221 },
   Neblo: { lat: 46.0066, lon: 13.5000 },

@@ -33,6 +33,10 @@ export function getVineyardIntelligence() {
   return request('/vineyard-intelligence')
 }
 
+export function getWeatherForLocation(lat, lon) {
+  return request(`/vineyard-intelligence/weather?lat=${lat}&lon=${lon}`)
+}
+
 export function predictHarvest(payload) {
   return request('/predict', {
     method: 'POST',

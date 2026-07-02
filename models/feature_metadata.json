@@ -41,14 +41,50 @@
     "year"
   ],
   "categorical_options": {
-    "grape_variety": ["Cabernet Sauvignon", "Chardonnay", "Malvazija", "Merlot", "Pinot Grigio", "Pinot Noir", "Rebula", "Sauvignon Blanc"],
-    "soil_type": ["Clay", "Clay-Loam", "Loam", "Marl", "Marl-Loam", "Sandy-Loam"],
-    "location": ["Biljana", "Cerovo", "Dobrovo", "Kozana", "Medana", "Neblo", "Vipolže", "Šmartno"]
+    "grape_variety": [
+      "Cabernet Sauvignon",
+      "Chardonnay",
+      "Malvazija",
+      "Merlot",
+      "Pinot Grigio",
+      "Pinot Noir",
+      "Rebula",
+      "Sauvignon Blanc"
+    ],
+    "soil_type": [
+      "Clay",
+      "Clay-Loam",
+      "Loam",
+      "Marl",
+      "Marl-Loam",
+      "Sandy-Loam"
+    ],
+    "location": [
+      "Biljana",
+      "Cerovo",
+      "Dobrovo",
+      "Kozana",
+      "Medana",
+      "Neblo",
+      "Vipolže",
+      "Šmartno"
+    ]
   },
   "valid_ranges": {
-    "year": {"min": 1991, "max": 2035, "note": "training data covers 1991-2024; beyond that is extrapolation"},
-    "elevation_m": {"min": 50, "max": 400, "note": "training data covers 88-155m; wider bound left for other Brda vineyards"},
-    "vine_age_years": {"min": 0, "max": 80}
+    "year": {
+      "min": 1991,
+      "max": 2035,
+      "note": "training data covers 1991-2024; beyond that is extrapolation"
+    },
+    "elevation_m": {
+      "min": 50,
+      "max": 400,
+      "note": "training data covers 88-155m; wider bound left for other Brda vineyards"
+    },
+    "vine_age_years": {
+      "min": 0,
+      "max": 80
+    }
   },
   "raw_feature_defaults": {
     "avg_temperature_C": 18.0,
@@ -79,5 +115,853 @@
     "Normal": 263.4,
     "Late": 275.9,
     "source": "mean harvest_doy per harvest_category on the full dataset (analysis/notebooks/01_eda.ipynb section 3). Used to convert a predicted category into an approximate calendar date for the requested year -- a real statistic, not a per-vineyard forecast."
+  },
+  "weather_analog_years": {
+    "weather_features": [
+      "avg_temperature_C",
+      "min_spring_temp_C",
+      "summer_heat_days",
+      "spring_frost_days",
+      "winter_rainfall_mm",
+      "spring_rainfall_mm",
+      "summer_rainfall_mm",
+      "rainfall_deviation_mm",
+      "humidity_pct",
+      "sunshine_hours",
+      "soil_moisture_pct"
+    ],
+    "weather_by_year": {
+      "1991": {
+        "avg_temperature_C": 17.5,
+        "min_spring_temp_C": 5.0,
+        "summer_heat_days": 8.0,
+        "spring_frost_days": 3.0,
+        "winter_rainfall_mm": 192.0,
+        "spring_rainfall_mm": 292.0,
+        "summer_rainfall_mm": 341.0,
+        "rainfall_deviation_mm": 106.0,
+        "humidity_pct": 67.5,
+        "sunshine_hours": 2166.0,
+        "soil_moisture_pct": 41.5
+      },
+      "1992": {
+        "avg_temperature_C": 18.6,
+        "min_spring_temp_C": -0.1,
+        "summer_heat_days": 9.0,
+        "spring_frost_days": 11.0,
+        "winter_rainfall_mm": 153.0,
+        "spring_rainfall_mm": 283.0,
+        "summer_rainfall_mm": 327.0,
+        "rainfall_deviation_mm": -13.0,
+        "humidity_pct": 64.9,
+        "sunshine_hours": 2231.0,
+        "soil_moisture_pct": 42.1
+      },
+      "1993": {
+        "avg_temperature_C": 17.6,
+        "min_spring_temp_C": 4.4,
+        "summer_heat_days": 12.0,
+        "spring_frost_days": 3.0,
+        "winter_rainfall_mm": 231.0,
+        "spring_rainfall_mm": 253.0,
+        "summer_rainfall_mm": 324.0,
+        "rainfall_deviation_mm": 52.0,
+        "humidity_pct": 67.1,
+        "sunshine_hours": 2154.0,
+        "soil_moisture_pct": 36.8
+      },
+      "1994": {
+        "avg_temperature_C": 17.1,
+        "min_spring_temp_C": 3.5,
+        "summer_heat_days": 10.0,
+        "spring_frost_days": 7.0,
+        "winter_rainfall_mm": 205.0,
+        "spring_rainfall_mm": 302.0,
+        "summer_rainfall_mm": 330.0,
+        "rainfall_deviation_mm": 90.0,
+        "humidity_pct": 63.3,
+        "sunshine_hours": 2448.0,
+        "soil_moisture_pct": 42.4
+      },
+      "1995": {
+        "avg_temperature_C": 18.6,
+        "min_spring_temp_C": 3.9,
+        "summer_heat_days": 11.0,
+        "spring_frost_days": 5.0,
+        "winter_rainfall_mm": 145.0,
+        "spring_rainfall_mm": 334.0,
+        "summer_rainfall_mm": 361.0,
+        "rainfall_deviation_mm": 91.0,
+        "humidity_pct": 59.0,
+        "sunshine_hours": 2293.0,
+        "soil_moisture_pct": 45.9
+      },
+      "1996": {
+        "avg_temperature_C": 17.7,
+        "min_spring_temp_C": 2.5,
+        "summer_heat_days": 17.0,
+        "spring_frost_days": 4.0,
+        "winter_rainfall_mm": 214.0,
+        "spring_rainfall_mm": 279.0,
+        "summer_rainfall_mm": 296.0,
+        "rainfall_deviation_mm": -11.0,
+        "humidity_pct": 59.6,
+        "sunshine_hours": 2144.0,
+        "soil_moisture_pct": 35.7
+      },
+      "1997": {
+        "avg_temperature_C": 16.4,
+        "min_spring_temp_C": 5.3,
+        "summer_heat_days": 14.0,
+        "spring_frost_days": 5.0,
+        "winter_rainfall_mm": 95.0,
+        "spring_rainfall_mm": 213.0,
+        "summer_rainfall_mm": 284.0,
+        "rainfall_deviation_mm": -236.0,
+        "humidity_pct": 63.7,
+        "sunshine_hours": 2406.0,
+        "soil_moisture_pct": 38.4
+      },
+      "1998": {
+        "avg_temperature_C": 17.7,
+        "min_spring_temp_C": 3.7,
+        "summer_heat_days": 9.0,
+        "spring_frost_days": 6.0,
+        "winter_rainfall_mm": 123.0,
+        "spring_rainfall_mm": 326.0,
+        "summer_rainfall_mm": 337.0,
+        "rainfall_deviation_mm": 29.0,
+        "humidity_pct": 74.5,
+        "sunshine_hours": 2312.0,
+        "soil_moisture_pct": 36.3
+      },
+      "1999": {
+        "avg_temperature_C": 17.9,
+        "min_spring_temp_C": 2.7,
+        "summer_heat_days": 15.0,
+        "spring_frost_days": 11.0,
+        "winter_rainfall_mm": 222.0,
+        "spring_rainfall_mm": 352.0,
+        "summer_rainfall_mm": 350.0,
+        "rainfall_deviation_mm": 185.0,
+        "humidity_pct": 66.2,
+        "sunshine_hours": 2288.0,
+        "soil_moisture_pct": 39.5
+      },
+      "2000": {
+        "avg_temperature_C": 17.7,
+        "min_spring_temp_C": 3.5,
+        "summer_heat_days": 17.0,
+        "spring_frost_days": 6.0,
+        "winter_rainfall_mm": 175.0,
+        "spring_rainfall_mm": 332.0,
+        "summer_rainfall_mm": 367.0,
+        "rainfall_deviation_mm": 92.0,
+        "humidity_pct": 69.1,
+        "sunshine_hours": 2218.0,
+        "soil_moisture_pct": 32.6
+      },
+      "2001": {
+        "avg_temperature_C": 17.2,
+        "min_spring_temp_C": 5.4,
+        "summer_heat_days": 21.0,
+        "spring_frost_days": 1.0,
+        "winter_rainfall_mm": 145.0,
+        "spring_rainfall_mm": 244.0,
+        "summer_rainfall_mm": 340.0,
+        "rainfall_deviation_mm": -51.0,
+        "humidity_pct": 61.6,
+        "sunshine_hours": 1965.0,
+        "soil_moisture_pct": 44.8
+      },
+      "2002": {
+        "avg_temperature_C": 18.3,
+        "min_spring_temp_C": 1.3,
+        "summer_heat_days": 16.0,
+        "spring_frost_days": 8.0,
+        "winter_rainfall_mm": 189.0,
+        "spring_rainfall_mm": 239.0,
+        "summer_rainfall_mm": 282.0,
+        "rainfall_deviation_mm": -70.0,
+        "humidity_pct": 61.8,
+        "sunshine_hours": 2216.0,
+        "soil_moisture_pct": 36.3
+      },
+      "2003": {
+        "avg_temperature_C": 18.0,
+        "min_spring_temp_C": 3.3,
+        "summer_heat_days": 20.0,
+        "spring_frost_days": 8.0,
+        "winter_rainfall_mm": 144.0,
+        "spring_rainfall_mm": 318.0,
+        "summer_rainfall_mm": 351.0,
+        "rainfall_deviation_mm": 26.0,
+        "humidity_pct": 71.8,
+        "sunshine_hours": 2115.0,
+        "soil_moisture_pct": 42.1
+      },
+      "2004": {
+        "avg_temperature_C": 17.9,
+        "min_spring_temp_C": 3.5,
+        "summer_heat_days": 13.0,
+        "spring_frost_days": 6.0,
+        "winter_rainfall_mm": 121.0,
+        "spring_rainfall_mm": 254.0,
+        "summer_rainfall_mm": 363.0,
+        "rainfall_deviation_mm": -17.0,
+        "humidity_pct": 61.1,
+        "sunshine_hours": 2111.0,
+        "soil_moisture_pct": 32.2
+      },
+      "2005": {
+        "avg_temperature_C": 18.2,
+        "min_spring_temp_C": 1.2,
+        "summer_heat_days": 19.0,
+        "spring_frost_days": 4.0,
+        "winter_rainfall_mm": 132.0,
+        "spring_rainfall_mm": 239.0,
+        "summer_rainfall_mm": 323.0,
+        "rainfall_deviation_mm": -134.0,
+        "humidity_pct": 69.0,
+        "sunshine_hours": 2166.0,
+        "soil_moisture_pct": 37.8
+      },
+      "2006": {
+        "avg_temperature_C": 17.3,
+        "min_spring_temp_C": 1.3,
+        "summer_heat_days": 18.0,
+        "spring_frost_days": 4.0,
+        "winter_rainfall_mm": 149.0,
+        "spring_rainfall_mm": 263.0,
+        "summer_rainfall_mm": 266.0,
+        "rainfall_deviation_mm": -151.0,
+        "humidity_pct": 75.5,
+        "sunshine_hours": 2305.0,
+        "soil_moisture_pct": 31.9
+      },
+      "2007": {
+        "avg_temperature_C": 17.3,
+        "min_spring_temp_C": 2.8,
+        "summer_heat_days": 21.0,
+        "spring_frost_days": 4.0,
+        "winter_rainfall_mm": 151.0,
+        "spring_rainfall_mm": 230.0,
+        "summer_rainfall_mm": 246.0,
+        "rainfall_deviation_mm": -149.0,
+        "humidity_pct": 70.7,
+        "sunshine_hours": 2353.0,
+        "soil_moisture_pct": 33.8
+      },
+      "2008": {
+        "avg_temperature_C": 18.3,
+        "min_spring_temp_C": 1.9,
+        "summer_heat_days": 22.0,
+        "spring_frost_days": 3.0,
+        "winter_rainfall_mm": 184.0,
+        "spring_rainfall_mm": 299.0,
+        "summer_rainfall_mm": 390.0,
+        "rainfall_deviation_mm": 207.0,
+        "humidity_pct": 66.9,
+        "sunshine_hours": 2254.0,
+        "soil_moisture_pct": 33.2
+      },
+      "2009": {
+        "avg_temperature_C": 19.4,
+        "min_spring_temp_C": 6.5,
+        "summer_heat_days": 27.0,
+        "spring_frost_days": 4.0,
+        "winter_rainfall_mm": 107.0,
+        "spring_rainfall_mm": 178.0,
+        "summer_rainfall_mm": 229.0,
+        "rainfall_deviation_mm": -325.0,
+        "humidity_pct": 60.9,
+        "sunshine_hours": 2298.0,
+        "soil_moisture_pct": 42.9
+      },
+      "2010": {
+        "avg_temperature_C": 17.4,
+        "min_spring_temp_C": 2.7,
+        "summer_heat_days": 20.0,
+        "spring_frost_days": 3.0,
+        "winter_rainfall_mm": 95.0,
+        "spring_rainfall_mm": 291.0,
+        "summer_rainfall_mm": 349.0,
+        "rainfall_deviation_mm": -55.0,
+        "humidity_pct": 62.5,
+        "sunshine_hours": 1983.0,
+        "soil_moisture_pct": 35.7
+      },
+      "2011": {
+        "avg_temperature_C": 18.2,
+        "min_spring_temp_C": 3.4,
+        "summer_heat_days": 15.0,
+        "spring_frost_days": 2.0,
+        "winter_rainfall_mm": 153.0,
+        "spring_rainfall_mm": 265.0,
+        "summer_rainfall_mm": 320.0,
+        "rainfall_deviation_mm": -71.0,
+        "humidity_pct": 69.8,
+        "sunshine_hours": 2121.0,
+        "soil_moisture_pct": 45.1
+      },
+      "2012": {
+        "avg_temperature_C": 18.1,
+        "min_spring_temp_C": 2.7,
+        "summer_heat_days": 21.0,
+        "spring_frost_days": 2.0,
+        "winter_rainfall_mm": 112.0,
+        "spring_rainfall_mm": 201.0,
+        "summer_rainfall_mm": 298.0,
+        "rainfall_deviation_mm": -165.0,
+        "humidity_pct": 71.7,
+        "sunshine_hours": 2317.0,
+        "soil_moisture_pct": 35.9
+      },
+      "2013": {
+        "avg_temperature_C": 18.6,
+        "min_spring_temp_C": 0.2,
+        "summer_heat_days": 20.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 189.0,
+        "spring_rainfall_mm": 238.0,
+        "summer_rainfall_mm": 327.0,
+        "rainfall_deviation_mm": -5.0,
+        "humidity_pct": 73.1,
+        "sunshine_hours": 2252.0,
+        "soil_moisture_pct": 41.8
+      },
+      "2014": {
+        "avg_temperature_C": 18.6,
+        "min_spring_temp_C": 5.0,
+        "summer_heat_days": 20.0,
+        "spring_frost_days": 1.0,
+        "winter_rainfall_mm": 159.0,
+        "spring_rainfall_mm": 234.0,
+        "summer_rainfall_mm": 319.0,
+        "rainfall_deviation_mm": -47.0,
+        "humidity_pct": 66.8,
+        "sunshine_hours": 2116.0,
+        "soil_moisture_pct": 39.9
+      },
+      "2015": {
+        "avg_temperature_C": 19.0,
+        "min_spring_temp_C": 2.0,
+        "summer_heat_days": 23.0,
+        "spring_frost_days": 2.0,
+        "winter_rainfall_mm": 76.0,
+        "spring_rainfall_mm": 219.0,
+        "summer_rainfall_mm": 281.0,
+        "rainfall_deviation_mm": -244.0,
+        "humidity_pct": 63.3,
+        "sunshine_hours": 2161.0,
+        "soil_moisture_pct": 50.9
+      },
+      "2016": {
+        "avg_temperature_C": 18.4,
+        "min_spring_temp_C": -0.5,
+        "summer_heat_days": 21.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 195.0,
+        "spring_rainfall_mm": 340.0,
+        "summer_rainfall_mm": 416.0,
+        "rainfall_deviation_mm": 225.0,
+        "humidity_pct": 66.4,
+        "sunshine_hours": 2190.0,
+        "soil_moisture_pct": 37.5
+      },
+      "2017": {
+        "avg_temperature_C": 17.5,
+        "min_spring_temp_C": 3.5,
+        "summer_heat_days": 23.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 195.0,
+        "spring_rainfall_mm": 315.0,
+        "summer_rainfall_mm": 337.0,
+        "rainfall_deviation_mm": 79.0,
+        "humidity_pct": 69.6,
+        "sunshine_hours": 2056.0,
+        "soil_moisture_pct": 33.9
+      },
+      "2018": {
+        "avg_temperature_C": 19.6,
+        "min_spring_temp_C": 4.3,
+        "summer_heat_days": 19.0,
+        "spring_frost_days": 1.0,
+        "winter_rainfall_mm": 93.0,
+        "spring_rainfall_mm": 302.0,
+        "summer_rainfall_mm": 308.0,
+        "rainfall_deviation_mm": -29.0,
+        "humidity_pct": 69.0,
+        "sunshine_hours": 2205.0,
+        "soil_moisture_pct": 35.8
+      },
+      "2019": {
+        "avg_temperature_C": 17.5,
+        "min_spring_temp_C": 5.0,
+        "summer_heat_days": 29.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 244.0,
+        "spring_rainfall_mm": 246.0,
+        "summer_rainfall_mm": 297.0,
+        "rainfall_deviation_mm": 22.0,
+        "humidity_pct": 58.4,
+        "sunshine_hours": 2156.0,
+        "soil_moisture_pct": 24.2
+      },
+      "2020": {
+        "avg_temperature_C": 17.9,
+        "min_spring_temp_C": 2.5,
+        "summer_heat_days": 21.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 228.0,
+        "spring_rainfall_mm": 280.0,
+        "summer_rainfall_mm": 321.0,
+        "rainfall_deviation_mm": 83.0,
+        "humidity_pct": 71.4,
+        "sunshine_hours": 2062.0,
+        "soil_moisture_pct": 35.8
+      },
+      "2021": {
+        "avg_temperature_C": 16.2,
+        "min_spring_temp_C": 0.9,
+        "summer_heat_days": 27.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 134.0,
+        "spring_rainfall_mm": 249.0,
+        "summer_rainfall_mm": 349.0,
+        "rainfall_deviation_mm": -32.0,
+        "humidity_pct": 70.0,
+        "sunshine_hours": 2275.0,
+        "soil_moisture_pct": 26.3
+      },
+      "2022": {
+        "avg_temperature_C": 19.5,
+        "min_spring_temp_C": 4.9,
+        "summer_heat_days": 29.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 158.0,
+        "spring_rainfall_mm": 222.0,
+        "summer_rainfall_mm": 280.0,
+        "rainfall_deviation_mm": -177.0,
+        "humidity_pct": 65.9,
+        "sunshine_hours": 2208.0,
+        "soil_moisture_pct": 36.0
+      },
+      "2023": {
+        "avg_temperature_C": 18.8,
+        "min_spring_temp_C": 2.7,
+        "summer_heat_days": 23.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 171.0,
+        "spring_rainfall_mm": 221.0,
+        "summer_rainfall_mm": 243.0,
+        "rainfall_deviation_mm": -202.0,
+        "humidity_pct": 63.1,
+        "sunshine_hours": 2229.0,
+        "soil_moisture_pct": 43.6
+      },
+      "2024": {
+        "avg_temperature_C": 19.5,
+        "min_spring_temp_C": 3.5,
+        "summer_heat_days": 35.0,
+        "spring_frost_days": 0.0,
+        "winter_rainfall_mm": 157.0,
+        "spring_rainfall_mm": 312.0,
+        "summer_rainfall_mm": 352.0,
+        "rainfall_deviation_mm": 44.0,
+        "humidity_pct": 67.7,
+        "sunshine_hours": 2335.0,
+        "soil_moisture_pct": 41.8
+      }
+    },
+    "weather_feature_stats": {
+      "avg_temperature_C": {
+        "mean": 18.044,
+        "std": 0.821
+      },
+      "min_spring_temp_C": {
+        "mean": 3.071,
+        "std": 1.665
+      },
+      "summer_heat_days": {
+        "mean": 18.971,
+        "std": 6.255
+      },
+      "spring_frost_days": {
+        "mean": 3.353,
+        "std": 3.142
+      },
+      "winter_rainfall_mm": {
+        "mean": 159.882,
+        "std": 43.366
+      },
+      "spring_rainfall_mm": {
+        "mean": 269.559,
+        "std": 44.342
+      },
+      "summer_rainfall_mm": {
+        "mean": 320.706,
+        "std": 41.284
+      },
+      "rainfall_deviation_mm": {
+        "mean": -25.088,
+        "std": 130.914
+      },
+      "humidity_pct": {
+        "mean": 66.556,
+        "std": 4.524
+      },
+      "sunshine_hours": {
+        "mean": 2209.088,
+        "std": 110.288
+      },
+      "soil_moisture_pct": {
+        "mean": 37.953,
+        "std": 5.51
+      }
+    },
+    "harvest_doy_by_year_variety": {
+      "1991": {
+        "Cabernet Sauvignon": 280.6,
+        "Chardonnay": 260.5,
+        "Malvazija": 273.8,
+        "Merlot": 278.8,
+        "Pinot Grigio": 255.8,
+        "Pinot Noir": 267.4,
+        "Rebula": 271.2,
+        "Sauvignon Blanc": 263.5
+      },
+      "1992": {
+        "Cabernet Sauvignon": 289.8,
+        "Chardonnay": 269.6,
+        "Malvazija": 280.8,
+        "Merlot": 282.4,
+        "Pinot Grigio": 264.0,
+        "Pinot Noir": 274.5,
+        "Rebula": 275.6,
+        "Sauvignon Blanc": 273.0
+      },
+      "1993": {
+        "Cabernet Sauvignon": 281.9,
+        "Chardonnay": 258.5,
+        "Malvazija": 270.5,
+        "Merlot": 274.1,
+        "Pinot Grigio": 258.0,
+        "Pinot Noir": 265.0,
+        "Rebula": 269.0,
+        "Sauvignon Blanc": 262.8
+      },
+      "1994": {
+        "Cabernet Sauvignon": 289.1,
+        "Chardonnay": 267.0,
+        "Malvazija": 278.8,
+        "Merlot": 280.6,
+        "Pinot Grigio": 262.6,
+        "Pinot Noir": 269.6,
+        "Rebula": 274.1,
+        "Sauvignon Blanc": 269.1
+      },
+      "1995": {
+        "Cabernet Sauvignon": 281.8,
+        "Chardonnay": 258.4,
+        "Malvazija": 270.9,
+        "Merlot": 273.4,
+        "Pinot Grigio": 255.6,
+        "Pinot Noir": 266.8,
+        "Rebula": 269.5,
+        "Sauvignon Blanc": 261.5
+      },
+      "1996": {
+        "Cabernet Sauvignon": 280.8,
+        "Chardonnay": 257.0,
+        "Malvazija": 270.2,
+        "Merlot": 272.4,
+        "Pinot Grigio": 255.1,
+        "Pinot Noir": 263.8,
+        "Rebula": 269.0,
+        "Sauvignon Blanc": 260.8
+      },
+      "1997": {
+        "Cabernet Sauvignon": 286.4,
+        "Chardonnay": 264.5,
+        "Malvazija": 277.1,
+        "Merlot": 281.1,
+        "Pinot Grigio": 260.6,
+        "Pinot Noir": 269.8,
+        "Rebula": 276.8,
+        "Sauvignon Blanc": 266.0
+      },
+      "1998": {
+        "Cabernet Sauvignon": 283.8,
+        "Chardonnay": 265.2,
+        "Malvazija": 272.5,
+        "Merlot": 278.4,
+        "Pinot Grigio": 260.4,
+        "Pinot Noir": 268.9,
+        "Rebula": 274.8,
+        "Sauvignon Blanc": 266.9
+      },
+      "1999": {
+        "Cabernet Sauvignon": 289.6,
+        "Chardonnay": 265.1,
+        "Malvazija": 278.5,
+        "Merlot": 283.8,
+        "Pinot Grigio": 266.5,
+        "Pinot Noir": 273.6,
+        "Rebula": 276.0,
+        "Sauvignon Blanc": 270.0
+      },
+      "2000": {
+        "Cabernet Sauvignon": 283.8,
+        "Chardonnay": 260.8,
+        "Malvazija": 273.8,
+        "Merlot": 276.0,
+        "Pinot Grigio": 257.6,
+        "Pinot Noir": 264.9,
+        "Rebula": 271.4,
+        "Sauvignon Blanc": 262.5
+      },
+      "2001": {
+        "Cabernet Sauvignon": 276.4,
+        "Chardonnay": 256.5,
+        "Malvazija": 264.9,
+        "Merlot": 267.4,
+        "Pinot Grigio": 249.9,
+        "Pinot Noir": 259.8,
+        "Rebula": 265.5,
+        "Sauvignon Blanc": 255.6
+      },
+      "2002": {
+        "Cabernet Sauvignon": 284.5,
+        "Chardonnay": 261.0,
+        "Malvazija": 274.1,
+        "Merlot": 278.4,
+        "Pinot Grigio": 258.9,
+        "Pinot Noir": 267.2,
+        "Rebula": 273.6,
+        "Sauvignon Blanc": 262.0
+      },
+      "2003": {
+        "Cabernet Sauvignon": 283.6,
+        "Chardonnay": 261.4,
+        "Malvazija": 272.9,
+        "Merlot": 275.4,
+        "Pinot Grigio": 259.5,
+        "Pinot Noir": 266.0,
+        "Rebula": 272.6,
+        "Sauvignon Blanc": 267.4
+      },
+      "2004": {
+        "Cabernet Sauvignon": 284.8,
+        "Chardonnay": 263.4,
+        "Malvazija": 273.8,
+        "Merlot": 276.6,
+        "Pinot Grigio": 259.0,
+        "Pinot Noir": 267.0,
+        "Rebula": 272.5,
+        "Sauvignon Blanc": 263.4
+      },
+      "2005": {
+        "Cabernet Sauvignon": 275.6,
+        "Chardonnay": 256.4,
+        "Malvazija": 268.0,
+        "Merlot": 270.4,
+        "Pinot Grigio": 251.2,
+        "Pinot Noir": 261.2,
+        "Rebula": 265.9,
+        "Sauvignon Blanc": 256.1
+      },
+      "2006": {
+        "Cabernet Sauvignon": 282.2,
+        "Chardonnay": 255.5,
+        "Malvazija": 271.5,
+        "Merlot": 273.6,
+        "Pinot Grigio": 256.2,
+        "Pinot Noir": 263.2,
+        "Rebula": 268.2,
+        "Sauvignon Blanc": 259.8
+      },
+      "2007": {
+        "Cabernet Sauvignon": 279.8,
+        "Chardonnay": 258.6,
+        "Malvazija": 269.6,
+        "Merlot": 271.9,
+        "Pinot Grigio": 251.6,
+        "Pinot Noir": 264.9,
+        "Rebula": 268.0,
+        "Sauvignon Blanc": 258.4
+      },
+      "2008": {
+        "Cabernet Sauvignon": 273.2,
+        "Chardonnay": 253.5,
+        "Malvazija": 265.1,
+        "Merlot": 267.2,
+        "Pinot Grigio": 250.6,
+        "Pinot Noir": 256.9,
+        "Rebula": 263.1,
+        "Sauvignon Blanc": 256.2
+      },
+      "2009": {
+        "Cabernet Sauvignon": 268.4,
+        "Chardonnay": 246.0,
+        "Malvazija": 260.4,
+        "Merlot": 262.6,
+        "Pinot Grigio": 244.4,
+        "Pinot Noir": 250.0,
+        "Rebula": 257.5,
+        "Sauvignon Blanc": 249.0
+      },
+      "2010": {
+        "Cabernet Sauvignon": 278.4,
+        "Chardonnay": 256.6,
+        "Malvazija": 269.2,
+        "Merlot": 271.8,
+        "Pinot Grigio": 252.0,
+        "Pinot Noir": 261.5,
+        "Rebula": 266.0,
+        "Sauvignon Blanc": 257.4
+      },
+      "2011": {
+        "Cabernet Sauvignon": 276.5,
+        "Chardonnay": 254.6,
+        "Malvazija": 265.6,
+        "Merlot": 269.6,
+        "Pinot Grigio": 253.0,
+        "Pinot Noir": 261.1,
+        "Rebula": 264.4,
+        "Sauvignon Blanc": 257.2
+      },
+      "2012": {
+        "Cabernet Sauvignon": 273.8,
+        "Chardonnay": 253.0,
+        "Malvazija": 264.2,
+        "Merlot": 264.9,
+        "Pinot Grigio": 249.4,
+        "Pinot Noir": 258.0,
+        "Rebula": 262.0,
+        "Sauvignon Blanc": 253.6
+      },
+      "2013": {
+        "Cabernet Sauvignon": 270.4,
+        "Chardonnay": 249.8,
+        "Malvazija": 260.8,
+        "Merlot": 264.5,
+        "Pinot Grigio": 245.9,
+        "Pinot Noir": 253.9,
+        "Rebula": 259.1,
+        "Sauvignon Blanc": 251.2
+      },
+      "2014": {
+        "Cabernet Sauvignon": 273.2,
+        "Chardonnay": 250.2,
+        "Malvazija": 263.2,
+        "Merlot": 263.4,
+        "Pinot Grigio": 246.1,
+        "Pinot Noir": 255.0,
+        "Rebula": 259.6,
+        "Sauvignon Blanc": 252.5
+      },
+      "2015": {
+        "Cabernet Sauvignon": 271.0,
+        "Chardonnay": 247.5,
+        "Malvazija": 260.5,
+        "Merlot": 261.5,
+        "Pinot Grigio": 245.1,
+        "Pinot Noir": 253.5,
+        "Rebula": 258.4,
+        "Sauvignon Blanc": 250.9
+      },
+      "2016": {
+        "Cabernet Sauvignon": 269.5,
+        "Chardonnay": 250.9,
+        "Malvazija": 262.1,
+        "Merlot": 264.5,
+        "Pinot Grigio": 245.2,
+        "Pinot Noir": 254.2,
+        "Rebula": 259.2,
+        "Sauvignon Blanc": 252.1
+      },
+      "2017": {
+        "Cabernet Sauvignon": 272.2,
+        "Chardonnay": 250.6,
+        "Malvazija": 260.9,
+        "Merlot": 266.6,
+        "Pinot Grigio": 246.8,
+        "Pinot Noir": 255.6,
+        "Rebula": 261.4,
+        "Sauvignon Blanc": 252.0
+      },
+      "2018": {
+        "Cabernet Sauvignon": 269.4,
+        "Chardonnay": 249.6,
+        "Malvazija": 259.6,
+        "Merlot": 260.4,
+        "Pinot Grigio": 243.2,
+        "Pinot Noir": 252.8,
+        "Rebula": 258.6,
+        "Sauvignon Blanc": 250.4
+      },
+      "2019": {
+        "Cabernet Sauvignon": 269.9,
+        "Chardonnay": 247.5,
+        "Malvazija": 260.4,
+        "Merlot": 263.1,
+        "Pinot Grigio": 243.1,
+        "Pinot Noir": 253.5,
+        "Rebula": 255.5,
+        "Sauvignon Blanc": 246.9
+      },
+      "2020": {
+        "Cabernet Sauvignon": 271.8,
+        "Chardonnay": 248.4,
+        "Malvazija": 261.6,
+        "Merlot": 265.0,
+        "Pinot Grigio": 246.1,
+        "Pinot Noir": 257.2,
+        "Rebula": 260.4,
+        "Sauvignon Blanc": 251.2
+      },
+      "2021": {
+        "Cabernet Sauvignon": 274.1,
+        "Chardonnay": 250.0,
+        "Malvazija": 261.6,
+        "Merlot": 268.1,
+        "Pinot Grigio": 248.9,
+        "Pinot Noir": 257.6,
+        "Rebula": 263.9,
+        "Sauvignon Blanc": 253.0
+      },
+      "2022": {
+        "Cabernet Sauvignon": 265.0,
+        "Chardonnay": 242.1,
+        "Malvazija": 252.2,
+        "Merlot": 257.6,
+        "Pinot Grigio": 238.9,
+        "Pinot Noir": 248.9,
+        "Rebula": 251.4,
+        "Sauvignon Blanc": 242.9
+      },
+      "2023": {
+        "Cabernet Sauvignon": 268.2,
+        "Chardonnay": 246.0,
+        "Malvazija": 259.2,
+        "Merlot": 262.0,
+        "Pinot Grigio": 245.6,
+        "Pinot Noir": 250.6,
+        "Rebula": 256.2,
+        "Sauvignon Blanc": 248.8
+      },
+      "2024": {
+        "Cabernet Sauvignon": 262.9,
+        "Chardonnay": 240.6,
+        "Malvazija": 251.5,
+        "Merlot": 255.0,
+        "Pinot Grigio": 239.9,
+        "Pinot Noir": 243.6,
+        "Rebula": 250.6,
+        "Sauvignon Blanc": 244.5
+      }
+    },
+    "source": "Real per-year weather profile and real mean harvest_doy per (year, grape_variety), computed from the full historical dataset (analysis/src/export_weather_analog_years.py). Used to find historical years with similar weather to a new request and estimate harvest timing from what actually happened in those years, rather than only from the predicted Early/Normal/Late category."
   }
 }

@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import LoadingState from '../components/LoadingState.jsx'
 import ErrorState from '../components/ErrorState.jsx'
-import { getVineyardIntelligence } from '../services/api.js'
+import Select from '../components/Select.jsx'
+import { LOCATION_COORDS } from '../data/locationCoords.js'
+import { getVineyardIntelligence, getWeatherForLocation } from '../services/api.js'
+
+// This is the app's second, independent use of the shared village list --
+// intentionally not the same 8 locations as the Harvest Prediction form's
+// LOCATIONS (which must exactly match the trained model's categorical
+// options and can't change). This selector is purely for monitoring live
+// weather, so it can (and does, per spec) include Gonjače instead of
+// Cerovo. All coordinates still come from the one shared LOCATION_COORDS
+// mapping -- nothing duplicated.
+const WEATHER_LOCATIONS = ['Biljana', 'Dobrovo', 'Medana', 'Šmartno', 'Kozana', 'Vipolže', 'Gonjače', 'Neblo']
 
 function Card({ emoji, title, children, className = '' }) {
   return (
@@ -66,17 +78,38 @@ function VineyardIntelligence() {
   const [intel, setIntel] = useState(null)
   const [error, setError] = useState(null)
 
+  // Weather is tracked separately from the rest of `intel` so changing the
+  // forecast location only refetches the weather block (Open-Meteo), not
+  // the news/podcasts/tips/events sections, which don't depend on it.
+  const [weatherLocation, setWeatherLocation] = useState('Dobrovo')
+  const [weather, setWeather] = useState(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+
   function load() {
     setError(null)
     setIntel(null)
     getVineyardIntelligence()
-      .then(setIntel)
+      .then((data) => {
+        setIntel(data)
+        setWeather(data.weather) // Dobrovo, from the initial page load -- no extra fetch needed
+      })
       .catch((err) => setError(err.message))
   }
 
   useEffect(() => {
     load()
   }, [])
+
+  function handleLocationChange(event) {
+    const location = event.target.value
+    setWeatherLocation(location)
+    setWeatherLoading(true)
+    const { lat, lon } = LOCATION_COORDS[location]
+    getWeatherForLocation(lat, lon)
+      .then(setWeather)
+      .catch(() => setWeather({ available: false, today: null, forecast: [], warnings: null }))
+      .finally(() => setWeatherLoading(false))
+  }
 
   return (
     <div>
@@ -94,23 +127,48 @@ function VineyardIntelligence() {
           {/* Weather Alerts */}
           <section>
             <h2 className="font-display text-xl font-semibold text-brda-forest">🌦️ Weather Alerts</h2>
-            <p className="text-sm text-brda-forest/60">Live 7-day forecast for Dobrovo, Goriška Brda.</p>
+            <p className="text-sm text-brda-forest/60">Live 7-day forecast, by vineyard location.</p>
 
-            {intel.weather.available ? (
-              <div className="mt-4 space-y-4">
-                <div className="flex gap-3 overflow-x-auto pb-1">
-                  {intel.weather.forecast.map((day, i) => (
-                    <ForecastDay key={day.date} day={day} isToday={i === 0} />
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <WarningPill label="🔥 Heat" warning={intel.weather.warnings.heat} />
-                  <WarningPill label="🌧️ Rain" warning={intel.weather.warnings.rain} />
-                  <WarningPill label="❄️ Frost" warning={intel.weather.warnings.frost} />
-                </div>
+            <div className="mt-4 flex flex-col gap-3 rounded-xl border border-brda-beige bg-brda-offwhite/60 p-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="w-full sm:max-w-xs">
+                <Select
+                  label="Forecast location"
+                  name="weather_location"
+                  value={weatherLocation}
+                  onChange={handleLocationChange}
+                  options={WEATHER_LOCATIONS}
+                />
               </div>
-            ) : (
-              <div className="mt-4"><ErrorState message="Live forecast is temporarily unavailable." /></div>
+              <p className="flex items-center gap-1.5 text-sm text-brda-forest/70">
+                {weatherLoading ? (
+                  <span className="flex items-center gap-1.5 text-brda-forest/50">
+                    <Loader2 size={14} className="animate-spin" /> Updating forecast…
+                  </span>
+                ) : (
+                  <>📍 Currently viewing: <span className="font-medium text-brda-forest">{weatherLocation}, Goriška Brda</span></>
+                )}
+              </p>
+            </div>
+
+            {weather && (
+              <div className={`transition-opacity duration-200 ${weatherLoading ? 'opacity-50' : 'opacity-100'}`}>
+                {weather.available ? (
+                  <div className="mt-4 space-y-4">
+                    <div className="flex gap-3 overflow-x-auto pb-1">
+                      {weather.forecast.map((day, i) => (
+                        <ForecastDay key={day.date} day={day} isToday={i === 0} />
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <WarningPill label="🔥 Heat" warning={weather.warnings.heat} />
+                      <WarningPill label="🌧️ Rain" warning={weather.warnings.rain} />
+                      <WarningPill label="❄️ Frost" warning={weather.warnings.frost} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4"><ErrorState message={`Live forecast for ${weatherLocation} is temporarily unavailable.`} /></div>
+                )}
+              </div>
             )}
           </section>
 
