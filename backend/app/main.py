@@ -39,4 +39,8 @@ app.include_router(eurostat_router)
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "models_loaded": prediction.models_loaded()}
+    return {
+        "status": "ok",
+        "models_loaded": prediction.models_loaded(),
+        "load_error": prediction.load_error(),
+    }

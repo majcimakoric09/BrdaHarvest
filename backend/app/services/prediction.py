@@ -54,6 +54,10 @@ def models_loaded() -> bool:
     return _classification_model is not None and _regression_model is not None
 
 
+def load_error() -> str | None:
+    return _load_error
+
+
 class ModelsNotReadyError(RuntimeError):
     pass
 
