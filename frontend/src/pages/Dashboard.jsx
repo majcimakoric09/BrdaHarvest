@@ -13,7 +13,6 @@ import LoadingState from '../components/LoadingState.jsx'
 import ErrorState from '../components/ErrorState.jsx'
 import Modal from '../components/Modal.jsx'
 import { getDashboardSummary } from '../services/api.js'
-import { LOCATION_COORDS } from '../data/locationCoords.js'
 
 const HARVEST_COLORS = { Early: '#4C7A5B', Normal: '#B8935A', Late: '#7A2E3A' }
 
@@ -210,7 +209,7 @@ function Dashboard() {
             >
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {summary.variety_counts.map((v) => (
-                  <Chip key={v.grape_variety} title={v.grape_variety} subtitle={`${v.count.toLocaleString()} records`} />
+                  <Chip key={v.grape_variety} title={v.grape_variety} />
                 ))}
               </div>
             </Modal>
@@ -223,23 +222,11 @@ function Dashboard() {
               onClose={() => setOpenModal(null)}
             >
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {summary.location_counts.map((l) => {
-                  const coords = LOCATION_COORDS[l.location]
-                  return (
-                    <Chip
-                      key={l.location}
-                      title={l.location}
-                      subtitle={
-                        coords
-                          ? `${l.count.toLocaleString()} records · ${coords.lat.toFixed(4)}°N, ${coords.lon.toFixed(4)}°E`
-                          : `${l.count.toLocaleString()} records`
-                      }
-                    />
-                  )
-                })}
+                {summary.location_counts.map((l) => (
+                  <Chip key={l.location} title={l.location} />
+                ))}
               </div>
               <p className="mt-3 text-xs text-brda-forest/60">
-                Coordinates are approximate village-center placements, not surveyed points.
                 A map preview for each location is available on the Harvest Prediction page.
               </p>
             </Modal>

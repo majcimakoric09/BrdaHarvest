@@ -21,6 +21,10 @@ export function getClimateTrends() {
   return request('/climate/trends')
 }
 
+export function getRegionalComparison() {
+  return request('/climate/regional-comparison')
+}
+
 export function getModelPerformance() {
   return request('/model/performance')
 }

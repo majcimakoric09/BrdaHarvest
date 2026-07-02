@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar.jsx'
+import Footer from './Footer.jsx'
 
 function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -32,7 +33,10 @@ function Layout({ children }) {
         </div>
       )}
 
-      <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-10">{children}</main>
+      <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-10">
+        {children}
+        <Footer />
+      </main>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Grape, CloudSun, BarChart3, Newspaper, X } from 'lucide-react'
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/predict', label: 'Harvest Prediction', icon: Grape },
   { to: '/climate', label: 'Climate Trends', icon: CloudSun },
