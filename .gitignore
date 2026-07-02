@@ -21,7 +21,14 @@ frontend/dist/
 .vite/
 
 # --- ML model artifacts ---
+# The two selected final models (LogisticRegression + Ridge, ~7KB/~6KB) are
+# committed on purpose -- the deployed backend (Render) loads them straight
+# from the repo checkout at startup, so they have to actually be present in
+# git, not just generated locally. Other/experimental *.pkl files (e.g. a
+# candidate model saved during training that wasn't selected) stay ignored.
 models/*.pkl
+!models/classification_model.pkl
+!models/regression_model.pkl
 models/*.joblib
 models/*.onnx
 models/artifacts/*
