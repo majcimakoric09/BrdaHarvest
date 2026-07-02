@@ -1,0 +1,14 @@
+# This is a monorepo -- Vercel only needs to build frontend/ (the Vite
+# app). Without this, Vercel's zero-config detection scans the whole repo
+# and finds backend/requirements.txt plus backend/app/api/*.py, mistakes
+# it for a Python Serverless Functions setup (Vercel's own /api convention),
+# and tries to pip-install fastapi/pandas/scikit-learn/etc. alongside the
+# actual frontend build -- unrelated to this deployment and a likely cause
+# of build failures/timeouts. The backend deploys separately on Render.
+backend/
+analysis/
+models/
+data/
+reports/
+slides/
+docs/
