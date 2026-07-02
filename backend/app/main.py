@@ -19,6 +19,12 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Vite dev server
+    # Vercel gives this project multiple live URLs (production domain,
+    # per-branch previews like ...-git-main-..., per-deployment previews
+    # with a random hash) -- matching by pattern instead of one hardcoded
+    # URL means new preview deployments work without another backend
+    # redeploy.
+    allow_origin_regex=r"^https://brda-harvest.*\.vercel\.app$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
